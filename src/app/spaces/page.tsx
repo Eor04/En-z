@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { ShoppingBag, Store, ArrowRight, Sparkles, MapPin, ExternalLink, Snowflake } from 'lucide-react';
 import prisma from '@/infrastructure/db/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Espacios Gastronómicos & Patios de Comida | PedidosTrinidad',
   description: 'Descubre los patios de comida, galerías y centros gastronómicos de Trinidad.',

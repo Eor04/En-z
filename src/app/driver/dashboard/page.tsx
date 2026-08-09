@@ -48,6 +48,8 @@ import {
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { usePushNotifications } from '@/presentation/hooks/usePushNotifications';
 
+export const dynamic = 'force-dynamic';
+
 export default function DriverDashboardPage() {
   const { data: session, status } = useSession();
   const [isOnline, setIsOnline] = useState(true);

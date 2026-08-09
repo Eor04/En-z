@@ -20,6 +20,8 @@ import { ProductManager } from '@/presentation/components/store/ProductManager';
 import { StoreReceiptsManager } from '@/presentation/components/payments/StoreReceiptsManager';
 import { StoreLiveOrdersManager } from '@/presentation/components/store/StoreLiveOrdersManager';
 
+export const dynamic = 'force-dynamic';
+
 export default function StoreDashboardPage() {
   const { data: session, status } = useSession();
   const [businessData, setBusinessData] = useState<any>(null);

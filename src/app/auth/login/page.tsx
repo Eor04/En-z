@@ -3,6 +3,8 @@ import { UnifiedLoginForm } from '@/presentation/components/auth/UnifiedLoginFor
 import Link from 'next/link';
 import { ShoppingBag, ArrowLeft } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Iniciar Sesión | PedidosTrinidad Delivery',
   description: 'Portal de acceso unificado para Clientes, Tiendas, Repartidores y Administradores de PedidosTrinidad.',

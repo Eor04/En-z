@@ -27,6 +27,8 @@ import { useCart } from '@/presentation/context/CartContext';
 import { ClientLocationPicker } from '@/presentation/components/maps/ClientLocationPicker';
 import { AddressBook } from '@/presentation/components/maps/AddressBook';
 
+export const dynamic = 'force-dynamic';
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { data: session } = useSession();

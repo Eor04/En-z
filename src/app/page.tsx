@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import prisma from '@/infrastructure/db/prisma';
 
+export const dynamic = 'force-dynamic';
+
 async function getSpacesData() {
   try {
     return await prisma.space.findMany({

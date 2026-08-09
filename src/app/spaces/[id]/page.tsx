@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { Store, ArrowLeft, ArrowRight, Utensils, Phone, Clock, MapPin, ExternalLink, Snowflake } from 'lucide-react';
 import prisma from '@/infrastructure/db/prisma';
 
+export const dynamic = 'force-dynamic';
+
 async function getSpaceDetails(id: string) {
   return await (prisma.space as any).findUnique({
     where: { id },

@@ -39,6 +39,8 @@ import {
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { LiveConnectionBadge } from '@/presentation/components/common/LiveConnectionBadge';
 
+export const dynamic = 'force-dynamic';
+
 const STATUS_STEPS = [
   { key: 'esperando_pago', label: 'Esperando Pago', desc: 'Validación de pago' },
   { key: 'en_preparacion', label: 'En Cocina', desc: 'Preparando platos' },

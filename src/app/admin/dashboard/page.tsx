@@ -44,6 +44,8 @@ import {
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { LiveConnectionBadge } from '@/presentation/components/common/LiveConnectionBadge';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<'financials' | 'orders' | 'catalog' | 'users'>('financials');
