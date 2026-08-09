@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { PrismaOrderRepository } from '@/infrastructure/repositories/PrismaOrderRepository';
 import { GetOrderDetails } from '@/application/use-cases/orders/GetOrderDetails';

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { PrismaUserRepository } from '@/infrastructure/repositories/PrismaUserRepository';
 import { RegisterCustomer } from '@/application/use-cases/auth/RegisterCustomer';

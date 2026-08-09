@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { PrismaSpaceRepository } from '@/infrastructure/repositories/PrismaSpaceRepository';
 import { PrismaBusinessRepository } from '@/infrastructure/repositories/PrismaBusinessRepository';

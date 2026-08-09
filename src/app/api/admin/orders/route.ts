@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { ListGlobalAuditOrders } from '@/application/use-cases/admin/ListGlobalAuditOrders';
 
