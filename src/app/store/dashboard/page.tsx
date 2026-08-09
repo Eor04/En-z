@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
@@ -19,8 +21,6 @@ import { AttendanceToggle } from '@/presentation/components/store/AttendanceTogg
 import { ProductManager } from '@/presentation/components/store/ProductManager';
 import { StoreReceiptsManager } from '@/presentation/components/payments/StoreReceiptsManager';
 import { StoreLiveOrdersManager } from '@/presentation/components/store/StoreLiveOrdersManager';
-
-export const dynamic = 'force-dynamic';
 
 export default function StoreDashboardPage() {
   const { data: session, status } = useSession();

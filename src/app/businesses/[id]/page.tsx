@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -17,8 +19,6 @@ import {
 import { ProductCard } from '@/presentation/components/menu/ProductCard';
 import { ProductModal } from '@/presentation/components/menu/ProductModal';
 import { useCart } from '@/presentation/context/CartContext';
-
-export const dynamic = 'force-dynamic';
 
 export default function BusinessMenuPage({
   params,

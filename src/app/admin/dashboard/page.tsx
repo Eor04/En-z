@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
@@ -43,8 +45,6 @@ import {
 } from 'lucide-react';
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { LiveConnectionBadge } from '@/presentation/components/common/LiveConnectionBadge';
-
-export const dynamic = 'force-dynamic';
 
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();

@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
@@ -47,8 +49,6 @@ import {
 } from '@/presentation/utils/audioAlerts';
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { usePushNotifications } from '@/presentation/hooks/usePushNotifications';
-
-export const dynamic = 'force-dynamic';
 
 export default function DriverDashboardPage() {
   const { data: session, status } = useSession();

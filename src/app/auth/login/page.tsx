@@ -1,9 +1,9 @@
+export const dynamic = 'force-dynamic';
+
 import { Suspense } from 'react';
 import { UnifiedLoginForm } from '@/presentation/components/auth/UnifiedLoginForm';
 import Link from 'next/link';
 import { ShoppingBag, ArrowLeft } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Iniciar Sesión | PedidosTrinidad Delivery',

@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -38,8 +40,6 @@ import {
 } from '@/presentation/utils/audioAlerts';
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { LiveConnectionBadge } from '@/presentation/components/common/LiveConnectionBadge';
-
-export const dynamic = 'force-dynamic';
 
 const STATUS_STEPS = [
   { key: 'esperando_pago', label: 'Esperando Pago', desc: 'Validación de pago' },

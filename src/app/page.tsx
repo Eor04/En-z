@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import {
   ShoppingBag,
@@ -13,8 +15,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import prisma from '@/infrastructure/db/prisma';
-
-export const dynamic = 'force-dynamic';
 
 async function getSpacesData() {
   try {
