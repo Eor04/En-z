@@ -139,6 +139,43 @@ export const authOptions: NextAuthOptions = {
       : []),
   ],
   callbacks: {
+    // Se ejecuta en CADA inicio de sesión — maneja creación de usuario Google
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        try {
+          const email = user.email;
+          if (!email) return false;
+
+          // Buscar si ya existe en la BD
+          let dbUser = await prisma.user.findUnique({ where: { email } });
+
+          if (!dbUser) {
+            // Primera vez con Google → crear como CUSTOMER
+            dbUser = await prisma.user.create({
+              data: {
+                email,
+                name: user.name || email.split('@')[0],
+                image: user.image,
+                role: 'CUSTOMER',
+                password: null, // Google users no tienen contraseña local
+              },
+            });
+          }
+
+          // Asignar el ID de BD al objeto user para que llegue al JWT
+          user.id = dbUser.id;
+          (user as any).role = dbUser.role;
+          (user as any).driverCode = dbUser.driverCode;
+
+          return true;
+        } catch (error) {
+          console.error('[Google OAuth] Error creating/finding user:', error);
+          return false;
+        }
+      }
+      return true; // Credentials providers siempre pasan
+    },
+
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
@@ -146,11 +183,29 @@ export const authOptions: NextAuthOptions = {
         token.driverCode = (user as any).driverCode;
         token.businessId = (user as any).businessId;
       }
+
+      // Si el token ya existe pero no tiene rol (sesión persistida), recargar desde BD
+      if (!token.role && token.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email as string },
+            include: { business: true },
+          });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+            token.driverCode = dbUser.driverCode || undefined;
+            token.businessId = dbUser.business?.id;
+          }
+        } catch {}
+      }
+
       if (trigger === 'update' && session) {
         token = { ...token, ...session };
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id as string;
