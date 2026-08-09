@@ -26,11 +26,23 @@ export function UnifiedLoginForm() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab')?.toUpperCase() as AuthTab) || 'CUSTOMER';
 
+  // Mapear errores de NextAuth a mensajes legibles
+  const nextAuthError = searchParams.get('error');
+  const errorFromUrl = nextAuthError
+    ? nextAuthError === 'OAuthAccountNotLinked'
+      ? 'Este correo ya está registrado con contraseña. Usa el formulario de abajo en su lugar.'
+      : nextAuthError === 'OAuthSignin' || nextAuthError === 'OAuthCallback'
+      ? 'Error al conectar con Google. Verifica que el OAuth esté bien configurado.'
+      : nextAuthError === 'Configuration'
+      ? 'Google OAuth no está configurado en el servidor. Contacta al administrador.'
+      : `Error de autenticación: ${nextAuthError}`
+    : null;
+
   const [activeTab, setActiveTab] = useState<AuthTab>(initialTab);
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(errorFromUrl);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Form Fields
