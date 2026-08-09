@@ -1,0 +1,56 @@
+{
+  "name": "Pedidos Trinidad - Delivery & Gastronomía",
+  "short_name": "PedidosTrinidad",
+  "description": "Plataforma de delivery modular para patios de comida, restaurantes, licorerías y farmacias en Trinidad, Beni.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "id": "/?source=pwa",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "categories": ["food", "shopping", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Panel de Repartidor",
+      "short_name": "Repartidores",
+      "description": "Acceso al radar y entregas activas",
+      "url": "/driver/dashboard?source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Cocina & Comandas",
+      "short_name": "Mi Tienda",
+      "description": "Gestión de pedidos en cocina en tiempo real",
+      "url": "/store/dashboard?source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Patios & Restaurantes",
+      "short_name": "Explorar",
+      "description": "Pedir comida y productos en Trinidad",
+      "url": "/spaces?source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

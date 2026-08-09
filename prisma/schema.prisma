@@ -1,0 +1,183 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  BUSINESS_OWNER
+  DRIVER
+  CUSTOMER
+}
+
+enum OrderStatus {
+  esperando_pago
+  en_preparacion
+  buscando_driver
+  en_camino
+  entregado
+  cancelado
+}
+
+enum PaymentMethod {
+  QR_MANUAL
+  GATEWAY_ONLINE
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BusinessCategory {
+  PATIO_COMIDA
+  LICORERIA
+  FARMACIA
+  RESTAURANTE
+  OTRO
+}
+
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  name        String?
+  password    String?   // Hash bcrypt
+  image       String?
+  role        Role      @default(CUSTOMER)
+  driverCode  String?   @unique // Código único para ingreso rápido de repartidor (ej: DRV-777)
+  phone       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relaciones
+  ordersAsCustomer Order[]        @relation("CustomerOrders")
+  ordersAsDriver   Order[]        @relation("DriverOrders")
+  business         Business?      @relation("BusinessOwner")
+}
+
+model Space {
+  id            String     @id @default(uuid())
+  name          String     @unique // "El Bosque", "Plaza Verde", "Aloha", etc.
+  description   String?
+  imageUrl      String?
+  address       String?    // Dirección en Trinidad
+  googleMapsUrl String?    // Enlace de Google Maps
+  latitude      Float?
+  longitude     Float?
+  isActive      Boolean    @default(true) // Control Admin: Congelar/Descongelar por mensualidad
+  frozenReason  String?    // Motivo si está congelado (ej: "Mensualidad pendiente de 100 Bs")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  businesses    Business[]
+}
+
+model Business {
+  id            String           @id @default(uuid())
+  name          String
+  category      BusinessCategory @default(PATIO_COMIDA)
+  spaceId       String
+  space         Space            @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  ownerId       String           @unique
+  owner         User             @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerPhone    String
+  logoUrl       String?
+  bannerUrl     String?
+  qrCodeUrl     String?          // Imagen QR asignada para transferencias QR_MANUAL
+  address       String?          // Ubicación interna o calle
+  googleMapsUrl String?          // Enlace directo de Google Maps
+  latitude      Float?
+  longitude     Float?
+  isActive      Boolean          @default(true)  // Control Admin: Deshabilitar/Congelar por falta de pago (Suscripción 100 Bs)
+  frozenReason  String?          // Motivo de suspensión
+  isOpen        Boolean          @default(false) // Control Tienda: Abierto / Cerrado para asistencia diaria
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  products      Product[]
+  orders        Order[]
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  price       Float
+  stock       Int         @default(0)
+  description String
+  imageUrl    String?
+  categories  String[]    // Tags (Hamburguesas, Bebidas, Combos, etc.)
+  isAvailable Boolean     @default(true)
+  businessId  String
+  business    Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  customerId      String
+  customer        User           @relation("CustomerOrders", fields: [customerId], references: [id])
+  businessId      String
+  business        Business       @relation(fields: [businessId], references: [id])
+  driverId        String?
+  driver          User?          @relation("DriverOrders", fields: [driverId], references: [id])
+  totalPrice      Float
+  deliveryFee     Float          @default(10.0)
+  deliveryAddress String
+  customerPhone   String
+  notes           String?
+  batchCode       String?        // Código de lote para agrupar pedidos multi-tienda (ej: BATCH-ABC123)
+  driverRating    Int?           // Calificación de 1 a 5 estrellas otorgada al repartidor
+  driverReview    String?        // Reseña u opinión del cliente sobre el servicio de delivery
+  ratedAt         DateTime?      // Fecha/hora en que se registró la calificación
+  status          OrderStatus    @default(esperando_pago)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  items           OrderItem[]
+  payment         Payment?
+  tracking        OrderTracking?
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  unitPrice Float
+  subtotal  Float
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  orderId       String        @unique
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  amount        Float
+  receiptUrl    String?       // URL de la captura del comprobante para QR_MANUAL
+  transactionId String?       // ID devuelto por pasarela automática (GATEWAY_ONLINE)
+  qrCodeData    String?       // Información del QR generado dinámicamente
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model OrderTracking {
+  id          String    @id @default(uuid())
+  orderId     String    @unique
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  acceptedAt  DateTime? // Hora en que el restaurante aceptó e inició preparación
+  pickedUpAt  DateTime? // Hora en que el repartidor recogió el pedido
+  deliveredAt DateTime? // Hora en que el repartidor entregó el pedido
+  createdAt   DateTime  @default(now())
+}
