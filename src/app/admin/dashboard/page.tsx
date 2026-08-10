@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { LiveConnectionBadge } from '@/presentation/components/common/LiveConnectionBadge';
+import { CloudinaryUploader } from '@/presentation/components/common/CloudinaryUploader';
 
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
@@ -1566,30 +1567,14 @@ export default function AdminDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1 font-semibold">URL de Imagen del Espacio</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
+                <CloudinaryUploader
+                  label="Imagen de Portada del Espacio"
                   value={newSpaceForm.imageUrl}
-                  onChange={(e) => setNewSpaceForm({ ...newSpaceForm, imageUrl: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-rose-500 focus:outline-none mb-2"
+                  onChange={(url) => setNewSpaceForm({ ...newSpaceForm, imageUrl: url })}
+                  folder="pedidos_trinidad/spaces"
+                  aspect="wide"
+                  previewHeight={140}
                 />
-                {/* Image presets */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] text-slate-400 block font-medium">Sugerencias rápidas de imagen:</span>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {TRINIDAD_IMAGE_PRESETS.map((p, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setNewSpaceForm({ ...newSpaceForm, imageUrl: p.url })}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] text-left truncate border border-slate-700/60 transition-colors"
-                      >
-                        📸 {p.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               <div>
@@ -1688,45 +1673,14 @@ export default function AdminDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1 font-semibold">URL de Imagen de Portada</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
+                <CloudinaryUploader
+                  label="Imagen de Portada del Espacio"
                   value={editSpaceForm.imageUrl}
-                  onChange={(e) => setEditSpaceForm({ ...editSpaceForm, imageUrl: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-rose-500 focus:outline-none mb-2 font-mono text-[11px]"
+                  onChange={(url) => setEditSpaceForm({ ...editSpaceForm, imageUrl: url })}
+                  folder="pedidos_trinidad/spaces"
+                  aspect="wide"
+                  previewHeight={140}
                 />
-
-                {/* Live Preview */}
-                {editSpaceForm.imageUrl && (
-                  <div className="relative h-28 w-full rounded-xl overflow-hidden mb-2 border border-slate-700 bg-slate-900">
-                    <img
-                      src={editSpaceForm.imageUrl}
-                      alt="Vista previa"
-                      className="w-full h-full object-cover"
-                    />
-                    <span className="absolute top-2 left-2 text-[9px] bg-slate-950/80 px-2 py-0.5 rounded-md font-bold text-white">
-                      Vista previa
-                    </span>
-                  </div>
-                )}
-
-                {/* Presets */}
-                <div className="space-y-1">
-                  <span className="text-[10px] text-slate-400 block font-medium">Sugerencias de imágenes:</span>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {TRINIDAD_IMAGE_PRESETS.map((p, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setEditSpaceForm({ ...editSpaceForm, imageUrl: p.url })}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] text-left truncate border border-slate-700/60 transition-colors"
-                      >
-                        📸 {p.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               <div>
@@ -1972,24 +1926,13 @@ export default function AdminDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1 font-semibold">URL de Logo del Comercio</label>
-                <input
-                  type="url"
-                  placeholder="https://..."
+                <CloudinaryUploader
+                  label="Logo del Comercio"
                   value={editBizForm.logoUrl}
-                  onChange={(e) => setEditBizForm({ ...editBizForm, logoUrl: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-amber-500 focus:outline-none mb-2 font-mono text-[11px]"
+                  onChange={(url) => setEditBizForm({ ...editBizForm, logoUrl: url })}
+                  folder="pedidos_trinidad/logos"
+                  aspect="logo"
                 />
-                {editBizForm.logoUrl && (
-                  <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-900 border border-slate-700">
-                    <img
-                      src={editBizForm.logoUrl}
-                      alt="Logo preview"
-                      className="w-10 h-10 rounded-lg object-cover border border-slate-600"
-                    />
-                    <span className="text-[10px] text-slate-400 font-medium">Vista previa de logo</span>
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-2 pt-2">
