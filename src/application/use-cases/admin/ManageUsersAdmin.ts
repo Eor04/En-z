@@ -18,6 +18,8 @@ export interface UpdateUserInput {
   phone?: string;
   role?: Role;
   driverCode?: string | null;
+  isFrozen?: boolean;
+  frozenReason?: string | null;
 }
 
 export class ManageUsersAdmin {
@@ -48,6 +50,8 @@ export class ManageUsersAdmin {
         driverCode: true,
         phone: true,
         image: true,
+        isFrozen: true,
+        frozenReason: true,
         createdAt: true,
         updatedAt: true,
         business: {
@@ -214,6 +218,12 @@ export class ManageUsersAdmin {
       updateData.driverCode = `DRV-${Math.floor(100 + Math.random() * 900)}`;
     }
 
+    // Congelar / descongelar cuenta
+    if (data.isFrozen !== undefined) {
+      updateData.isFrozen = data.isFrozen;
+      updateData.frozenReason = data.frozenReason ?? null;
+    }
+
     // Si se pasa nueva contraseña, encriptarla
     if (data.password && data.password.trim().length > 0) {
       updateData.password = await PasswordHasher.hash(data.password.trim());
@@ -229,6 +239,8 @@ export class ManageUsersAdmin {
         role: true,
         driverCode: true,
         phone: true,
+        isFrozen: true,
+        frozenReason: true,
         createdAt: true,
         updatedAt: true,
       },

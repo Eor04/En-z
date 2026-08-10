@@ -321,6 +321,42 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Congelar / Descongelar usuario
+  const handleFreezeUser = async (user: any) => {
+    const willFreeze = !user.isFrozen;
+    let frozenReason: string | null = null;
+
+    if (willFreeze) {
+      frozenReason = window.prompt(
+        `¿Cuál es el motivo para CONGELAR la cuenta de "${user.name || user.email}"?\n(Este mensaje se mostrará al usuario cuando intente iniciar sesión)`,
+        'Cuenta suspendida por falta de pago o incumplimiento de términos.'
+      );
+      if (frozenReason === null) return; // Cancelado
+    } else {
+      if (!window.confirm(`¿Deseas DESCONGELAR la cuenta de "${user.name || user.email}"?`)) return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          isFrozen: willFreeze,
+          frozenReason: willFreeze ? frozenReason : null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al actualizar');
+
+      const action = willFreeze ? '❄️ CONGELADA' : '✅ DESCONGELADA';
+      setFeedback(`${action}: Cuenta de "${user.name || user.email}" ${willFreeze ? 'suspendida' : 'reactivada'} correctamente.`);
+      fetchAllAdminData();
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
   // Crear nuevo espacio
   const handleCreateSpace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1393,18 +1429,39 @@ export default function AdminDashboardPage() {
                         const RoleIcon = roleInfo.icon;
 
                         return (
-                          <tr key={u.id} className="hover:bg-slate-900/40 transition-colors">
+                          <tr
+                            key={u.id}
+                            className={`hover:bg-slate-900/40 transition-colors ${
+                              u.isFrozen ? 'bg-blue-950/20 border-l-2 border-l-blue-500/40' : ''
+                            }`}
+                          >
                             {/* User details */}
                             <td className="p-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-700 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-inner">
-                                  {u.name ? u.name.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
+                                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-inner ${
+                                   u.isFrozen
+                                     ? 'bg-blue-900/40 border-blue-500/40'
+                                     : 'bg-gradient-to-tr from-slate-800 to-slate-700 border-slate-700'
+                                 }`}>
+                                  {u.isFrozen ? '❄️' : (u.name ? u.name.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase())}
                                 </div>
                                 <div>
-                                  <div className="font-bold text-white text-xs">{u.name || 'Sin nombre'}</div>
+                                  <div className="font-bold text-white text-xs flex items-center gap-1.5">
+                                    {u.name || 'Sin nombre'}
+                                    {u.isFrozen && (
+                                      <span className="px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 text-[9px] font-bold border border-blue-500/30">
+                                        CONGELADO
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="text-slate-400 font-mono text-[11px] truncate max-w-[200px]">
                                     {u.email}
                                   </div>
+                                  {u.isFrozen && u.frozenReason && (
+                                     <div className="text-[10px] text-blue-400/70 mt-0.5 italic truncate max-w-[200px]">
+                                       {u.frozenReason}
+                                     </div>
+                                   )}
                                 </div>
                               </div>
                             </td>
@@ -1469,6 +1526,20 @@ export default function AdminDashboardPage() {
                             {/* Action Buttons */}
                             <td className="p-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
+                                {/* Freeze / Unfreeze */}
+                                <button
+                                  onClick={() => handleFreezeUser(u)}
+                                  className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors border ${
+                                    u.isFrozen
+                                      ? 'bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800/40'
+                                      : 'bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 border-blue-800/40'
+                                  }`}
+                                  title={u.isFrozen ? 'Descongelar cuenta' : 'Congelar cuenta'}
+                                >
+                                  <Snowflake className={`w-3.5 h-3.5 ${u.isFrozen ? 'text-emerald-400' : 'text-blue-400'}`} />
+                                  <span className="hidden sm:inline">{u.isFrozen ? 'Activar' : 'Congelar'}</span>
+                                </button>
+
                                 <button
                                   onClick={() => handleOpenEditUser(u)}
                                   className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1 transition-colors border border-slate-700"

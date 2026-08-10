@@ -73,6 +73,12 @@ export function UnifiedLoginForm() {
       });
 
       if (res?.error) {
+        // Si la cuenta está congelada, redirigir a la página de cuenta congelada
+        if (res.error.startsWith('FROZEN:')) {
+          const reason = res.error.replace('FROZEN:', '');
+          router.push(`/auth/frozen?reason=${reason}`);
+          return;
+        }
         setErrorMsg(res.error);
       } else {
         setSuccessMsg('¡Sesión iniciada exitosamente! Redirigiendo...');
@@ -109,6 +115,12 @@ export function UnifiedLoginForm() {
       });
 
       if (res?.error) {
+        // Si la cuenta está congelada
+        if (res.error.startsWith('FROZEN:')) {
+          const reason = res.error.replace('FROZEN:', '');
+          router.push(`/auth/frozen?reason=${reason}`);
+          return;
+        }
         setErrorMsg(res.error);
       } else {
         setSuccessMsg('¡Código de repartidor validado con éxito! Redirigiendo a tu portal...');

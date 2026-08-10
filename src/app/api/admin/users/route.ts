@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { userId, role, name, email, phone, driverCode, password } = body;
+    const { userId, role, name, email, phone, driverCode, password, isFrozen, frozenReason } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'userId es requerido' }, { status: 400 });
@@ -69,6 +69,8 @@ export async function PATCH(req: Request) {
       phone,
       driverCode,
       password,
+      isFrozen,
+      frozenReason,
     });
 
     return NextResponse.json({ success: true, user: updatedUser });

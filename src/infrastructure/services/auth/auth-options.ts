@@ -41,6 +41,13 @@ export const authOptions: NextAuthOptions = {
             password: credentials.password,
           });
 
+          // Verificar si la cuenta está congelada
+          const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+          if (dbUser?.isFrozen) {
+            const reason = encodeURIComponent(dbUser.frozenReason || 'Cuenta suspendida por el administrador.');
+            throw new Error(`FROZEN:${reason}`);
+          }
+
           // Obtener datos adicionales como el ID del negocio si es BUSINESS_OWNER
           let businessId: string | undefined = undefined;
           if (user.role === 'BUSINESS_OWNER') {
@@ -79,6 +86,13 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const user = await loginWithDriverCode.execute(credentials.code);
+
+          // Verificar si la cuenta está congelada
+          const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+          if (dbUser?.isFrozen) {
+            const reason = encodeURIComponent(dbUser.frozenReason || 'Cuenta suspendida por el administrador.');
+            throw new Error(`FROZEN:${reason}`);
+          }
 
           return {
             id: user.id,
@@ -160,6 +174,10 @@ export const authOptions: NextAuthOptions = {
                 password: null, // Google users no tienen contraseña local
               },
             });
+          } else if (dbUser.isFrozen) {
+            // Usuario congelado → redirigir a página de cuenta congelada
+            const reason = encodeURIComponent(dbUser.frozenReason || 'Cuenta suspendida por el administrador.');
+            return `/auth/frozen?reason=${reason}`;
           }
 
           // Asignar el ID de BD al objeto user para que llegue al JWT
