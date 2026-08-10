@@ -2,11 +2,13 @@
 
 export const dynamic = 'force-dynamic';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Snowflake, Phone, ArrowLeft, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function FrozenAccountPage() {
+// Componente interno que usa useSearchParams (requiere Suspense en Next.js 14)
+function FrozenContent() {
   const searchParams = useSearchParams();
   const reason = searchParams.get('reason') || '';
 
@@ -98,5 +100,20 @@ export default function FrozenAccountPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// Página exportada con Suspense boundary (requerido por Next.js 14 para useSearchParams)
+export default function FrozenAccountPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <FrozenContent />
+    </Suspense>
   );
 }
