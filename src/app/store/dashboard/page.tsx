@@ -15,18 +15,20 @@ import {
   ArrowRight,
   ExternalLink,
   QrCode,
-  ChefHat
+  ChefHat,
+  BarChart2,
 } from 'lucide-react';
 import { AttendanceToggle } from '@/presentation/components/store/AttendanceToggle';
 import { ProductManager } from '@/presentation/components/store/ProductManager';
 import { StoreReceiptsManager } from '@/presentation/components/payments/StoreReceiptsManager';
 import { StoreLiveOrdersManager } from '@/presentation/components/store/StoreLiveOrdersManager';
+import { StoreAnalyticsDashboard } from '@/presentation/components/store/StoreAnalyticsDashboard';
 
 export default function StoreDashboardPage() {
   const { data: session, status } = useSession();
   const [businessData, setBusinessData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'receipts' | 'products'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'receipts' | 'products' | 'analytics'>('orders');
 
   const fetchBusiness = async () => {
     try {
@@ -171,6 +173,17 @@ export default function StoreDashboardPage() {
           <Package className="w-4 h-4" />
           <span>Catálogo de Platos ({products?.length || 0})</span>
         </button>
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+            activeTab === 'analytics'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+          }`}
+        >
+          <BarChart2 className="w-4 h-4" />
+          <span>Mis Ganancias</span>
+        </button>
       </div>
 
       {/* TAB CONTENT 1: COMANDAS & COCINA EN VIVO */}
@@ -199,6 +212,15 @@ export default function StoreDashboardPage() {
           <ProductManager
             businessId={business.id}
             initialProducts={products || []}
+          />
+        </div>
+      )}
+      {/* TAB CONTENT 4: GANANCIAS & ANALYTICS */}
+      {activeTab === 'analytics' && business && (
+        <div className="space-y-6">
+          <StoreAnalyticsDashboard
+            businessId={business.id}
+            businessName={business.name}
           />
         </div>
       )}
