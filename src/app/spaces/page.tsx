@@ -12,8 +12,10 @@ export const metadata = {
 
 async function getSpaces() {
   return await (prisma.space as any).findMany({
+    where: { isActive: true }, // Solo mostrar espacios activos (no congelados)
     include: {
       businesses: {
+        where: { isActive: true }, // Solo negocios activos dentro del espacio
         select: {
           id: true,
           name: true,

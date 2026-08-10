@@ -21,6 +21,11 @@ export class GetBusinessMenu {
       throw new Error(`El negocio con ID "${businessId}" no existe`);
     }
 
+    // Si el negocio está congelado, no mostrar su menú públicamente
+    if (business.isActive === false) {
+      throw new Error(`Este comercio no está disponible en este momento`);
+    }
+
     const products = await this.productRepository.findByBusinessId(businessId);
 
     // Extraer categorías únicas disponibles en los productos del negocio

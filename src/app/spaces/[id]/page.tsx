@@ -11,6 +11,7 @@ async function getSpaceDetails(id: string) {
     where: { id },
     include: {
       businesses: {
+        where: { isActive: true }, // Solo negocios activos
         include: {
           products: {
             where: { isAvailable: true },
@@ -29,7 +30,8 @@ export default async function SpaceDetailPage({
 }) {
   const space = await getSpaceDetails(params.id);
 
-  if (!space) {
+  // Si no existe o está congelado → 404
+  if (!space || space.isActive === false) {
     notFound();
   }
 
