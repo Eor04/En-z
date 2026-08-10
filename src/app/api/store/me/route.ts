@@ -44,3 +44,31 @@ export async function GET() {
     );
   }
 }
+export async function PATCH(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    const user = session?.user as any;
+    const body = await req.json();
+    const { qrCodeUrl } = body;
+
+    let business = user?.id
+      ? await prisma.business.findFirst({ where: { ownerId: user.id } })
+      : await prisma.business.findFirst();
+
+    if (!business) {
+      return NextResponse.json({ error: 'No se encontró negocio asignado' }, { status: 404 });
+    }
+
+    const updated = await (prisma.business as any).update({
+      where: { id: business.id },
+      data: { ...(qrCodeUrl !== undefined && { qrCodeUrl }) },
+    });
+
+    return NextResponse.json({ success: true, business: updated });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Error al actualizar negocio' },
+      { status: 500 }
+    );
+  }
+}

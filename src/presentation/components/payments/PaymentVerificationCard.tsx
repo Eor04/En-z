@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   QrCode,
   CreditCard,
@@ -13,6 +13,10 @@ import {
   ShieldCheck,
   Sparkles,
   Lock,
+  Image as ImageIcon,
+  Loader2,
+  Link,
+  X,
 } from 'lucide-react';
 
 interface PaymentVerificationCardProps {
@@ -32,6 +36,54 @@ export function PaymentVerificationCard({
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [imgTab, setImgTab] = useState<'upload' | 'url'>('upload');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+  const uploadReceiptImage = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('Solo se permiten imágenes (JPG, PNG, WEBP).');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setErrorMessage('La imagen no puede superar 8MB.');
+      return;
+    }
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+      setErrorMessage('Cloudinary no configurado. Usa la pestaña URL.');
+      setImgTab('url');
+      return;
+    }
+    setUploadingImg(true);
+    setErrorMessage(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', UPLOAD_PRESET);
+      fd.append('folder', 'pedidos_trinidad/receipts');
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST', body: fd,
+      });
+      if (!res.ok) throw new Error('Error al subir imagen');
+      const data = await res.json();
+      setReceiptUrl(data.secure_url);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error al subir imagen');
+    } finally {
+      setUploadingImg(false);
+    }
+  }, [CLOUD_NAME, UPLOAD_PRESET]);
+
+  const handleFileDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadReceiptImage(file);
+  }, [uploadReceiptImage]);
 
   // Estados para pago con tarjeta
   const [cardNumber, setCardNumber] = useState('4500 1234 5678 9010');
@@ -186,11 +238,63 @@ export function PaymentVerificationCard({
                 <span>Adjuntar Comprobante de Transferencia Bancaria</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">
-                    URL de la captura o recibo (o dejar vacía para simular demo)
-                  </label>
+              {/* Uploader de comprobante */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] text-slate-400">Foto del comprobante de pago</label>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => setImgTab('upload')}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                        imgTab === 'upload' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'text-slate-500 hover:text-slate-300'
+                      }`}>
+                      <Upload className="w-3 h-3 inline mr-0.5" />Subir
+                    </button>
+                    <button type="button" onClick={() => setImgTab('url')}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                        imgTab === 'url' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'text-slate-500 hover:text-slate-300'
+                      }`}>
+                      <Link className="w-3 h-3 inline mr-0.5" />URL
+                    </button>
+                  </div>
+                </div>
+
+                {imgTab === 'upload' ? (
+                  <div className="space-y-2">
+                    {receiptUrl && (
+                      <div className="relative group w-full h-28 rounded-xl overflow-hidden border border-slate-700">
+                        <img src={receiptUrl} alt="Comprobante" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => setReceiptUrl('')}
+                          className="absolute top-2 right-2 p-1 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="absolute bottom-2 left-2 text-[9px] bg-emerald-900/80 text-emerald-300 px-2 py-0.5 rounded-md font-bold">
+                          Comprobante cargado ✓
+                        </span>
+                      </div>
+                    )}
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleFileDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`w-full rounded-xl border-2 border-dashed cursor-pointer flex flex-col items-center justify-center gap-1.5 py-4 transition-all ${
+                        isDragging ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-700 hover:border-emerald-600/50 hover:bg-slate-800/30'
+                      } ${uploadingImg ? 'pointer-events-none opacity-60' : ''}`}
+                    >
+                      {uploadingImg ? (
+                        <><Loader2 className="w-5 h-5 text-emerald-400 animate-spin" /><span className="text-[11px] text-slate-400">Subiendo comprobante...</span></>
+                      ) : (
+                        <><ImageIcon className="w-5 h-5 text-slate-500" />
+                        <span className="text-[11px] text-slate-400 text-center">
+                          {receiptUrl ? 'Cambiar comprobante' : 'Arrastra tu foto de comprobante aquí'}<br />
+                          <span className="text-slate-600">o haz clic · JPG, PNG · máx 8MB</span>
+                        </span></>
+                      )}
+                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadReceiptImage(f); }} />
+                    </div>
+                  </div>
+                ) : (
                   <input
                     type="url"
                     value={receiptUrl}
@@ -198,29 +302,30 @@ export function PaymentVerificationCard({
                     placeholder="https://ejemplo.com/comprobante.jpg"
                     className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 text-xs focus:border-emerald-500 outline-none"
                   />
-                </div>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">
-                    Nº de Operación / Referencia Bancaria (opcional)
-                  </label>
-                  <input
-                    type="text"
-                    value={transactionRef}
-                    onChange={(e) => setTransactionRef(e.target.value)}
-                    placeholder="Ej. OP-7829410"
-                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 text-xs focus:border-emerald-500 outline-none"
-                  />
-                </div>
+              {/* Referencia bancaria */}
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1">
+                  Nº de Operación / Referencia Bancaria (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={transactionRef}
+                  onChange={(e) => setTransactionRef(e.target.value)}
+                  placeholder="Ej. OP-7829410"
+                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 text-xs focus:border-emerald-500 outline-none"
+                />
               </div>
 
               <div className="flex items-center gap-3">
                 <button
                   type="submit"
-                  disabled={uploading}
+                  disabled={uploading || uploadingImg}
                   className="py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-md shadow-amber-600/20 flex items-center gap-2 transition-all disabled:opacity-50"
                 >
-                  <Upload className="w-3.5 h-3.5" />
+                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   <span>{uploading ? 'Enviando comprobante...' : 'Enviar Comprobante al Restaurante'}</span>
                 </button>
 
