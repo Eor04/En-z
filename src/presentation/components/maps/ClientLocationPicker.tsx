@@ -229,7 +229,7 @@ export function ClientLocationPicker({
           type="button"
           onClick={handleGetCurrentLocation}
           disabled={locating}
-          className="py-3 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all ring-2 ring-emerald-400/40 disabled:opacity-50"
+          className="py-3 px-5 rounded-2xl bg-gradient-to-r from-violet-500 to-arc hover:from-violet-400 hover:to-arc text-white text-xs font-black shadow-lg shadow-violet-500/25 flex items-center justify-center gap-2 transition-all ring-2 ring-violet-400/40 disabled:opacity-50"
         >
           <Crosshair className={`w-4 h-4 ${locating ? 'animate-spin' : ''}`} />
           <span>
@@ -243,16 +243,16 @@ export function ClientLocationPicker({
           href={`https://maps.google.com/?q=${lat},${lng}`}
           target="_blank"
           rel="noreferrer"
-          className="py-2.5 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+          className="py-2.5 px-3.5 rounded-xl bg-void-700/80 hover:bg-surface-raised border border-surface-line text-ink-soft hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
         >
           <span>Abrir en Google Maps</span>
-          <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+          <ExternalLink className="w-3.5 h-3.5 text-violet-400" />
         </a>
       </div>
 
       {locatedSuccess && (
-        <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="p-3 rounded-xl bg-violet-950/40 border border-violet-500/40 text-violet-300 text-xs flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-violet-400 shrink-0" />
           <span>
             ¡Ubicación GPS detectada con éxito! Puedes arrastrar el marcador verde en el mapa para ajustar la puerta de tu casa.
           </span>
@@ -260,34 +260,34 @@ export function ClientLocationPicker({
       )}
 
       {geoError && (
-        <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs flex items-center gap-2 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+        <div className="p-3 rounded-xl bg-violet-950/40 border border-warn/40 text-warn-soft text-xs flex items-center gap-2 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 text-warn shrink-0" />
           <span>{geoError}</span>
         </div>
       )}
 
       {/* Contenedor del Mapa Interactivo Leaflet */}
-      <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/40 shadow-xl">
+      <div className="relative rounded-2xl overflow-hidden border-2 border-violet-500/40 shadow-xl">
         <div
           ref={mapContainerRef}
-          className="w-full h-64 sm:h-80 bg-slate-900 z-0"
+          className="w-full h-64 sm:h-80 bg-void-700 z-0"
         />
 
         {/* Overlay con instrucciones */}
-        <div className="absolute top-3 right-3 z-10 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-[11px] text-slate-200 flex items-center gap-1.5 shadow-lg pointer-events-none">
-          <Compass className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="absolute top-3 right-3 z-10 bg-void/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-surface-line text-[11px] text-ink flex items-center gap-1.5 shadow-lg pointer-events-none">
+          <Compass className="w-3.5 h-3.5 text-violet-400" />
           <span>Haz clic o arrastra el pin en Trinidad</span>
         </div>
 
         {/* Barra inferior de coordenadas */}
-        <div className="absolute bottom-3 left-3 right-3 z-10 bg-slate-950/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="absolute bottom-3 left-3 right-3 z-10 bg-void/90 backdrop-blur-md p-2.5 rounded-xl border border-surface-line flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-slate-300 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-violet-400 animate-ping" />
+            <span className="text-ink-soft font-semibold">
               Coordenadas: <strong className="text-white font-mono">{lat.toFixed(5)}, {lng.toFixed(5)}</strong>
             </span>
           </div>
-          <span className="text-[10px] text-emerald-400 font-bold">
+          <span className="text-[10px] text-violet-400 font-bold">
             Trinidad, Beni • Lista para el repartidor ✓
           </span>
         </div>
@@ -295,7 +295,7 @@ export function ClientLocationPicker({
 
       {/* Presets rápidos si el GPS está apagado */}
       <div>
-        <span className="text-[11px] text-slate-400 block mb-1.5">
+        <span className="text-[11px] text-ink-mute block mb-1.5">
           Zonas de referencia rápida en Trinidad (haz clic para centrar):
         </span>
         <div className="flex flex-wrap gap-1.5">
@@ -304,7 +304,7 @@ export function ClientLocationPicker({
               key={preset.name}
               type="button"
               onClick={() => handleSelectPreset(preset.lat, preset.lng)}
-              className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-white text-[11px] font-semibold transition-all"
+              className="px-2.5 py-1 rounded-lg bg-void-700 border border-surface-line hover:border-violet-500/50 text-ink-soft hover:text-white text-[11px] font-semibold transition-all"
             >
               {preset.name}
             </button>

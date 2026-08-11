@@ -1,29 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="192" height="192">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a" />
-      <stop offset="50%" stop-color="#090d16" />
-      <stop offset="100%" stop-color="#020617" />
+    <linearGradient id="knot" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C084FC"/>
+      <stop offset="38%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#2E1065"/>
     </linearGradient>
-    <linearGradient id="primaryGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399" />
-      <stop offset="100%" stop-color="#059669" />
+    <linearGradient id="ribbon" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B0F73"/>
+      <stop offset="55%" stop-color="#150A2B"/>
+      <stop offset="100%" stop-color="#2A1156"/>
     </linearGradient>
-    <linearGradient id="accentGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fbbf24" />
-      <stop offset="100%" stop-color="#d97706" />
+    <radialGradient id="neb" cx="0.68" cy="0.36" r="0.6">
+      <stop offset="0%" stop-color="#E9D5FF" stop-opacity="0.5"/>
+      <stop offset="55%" stop-color="#A855F7" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="zink" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#F3ECFF"/>
+      <stop offset="100%" stop-color="#D8C8FF"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="128" fill="url(#bgGrad192)" />
-  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="#10b981" stroke-width="8" stroke-opacity="0.4" />
-  <g transform="translate(106, 96)">
-    <rect x="30" y="90" width="240" height="200" rx="36" fill="url(#primaryGrad192)" />
-    <path d="M 90 90 C 90 35, 210 35, 210 90" fill="none" stroke="#6ee7b7" stroke-width="24" stroke-linecap="round" />
-    <path d="M 165 130 L 125 195 L 160 195 L 135 255 L 185 180 L 150 180 Z" fill="url(#accentGrad192)" />
-    <circle cx="230" cy="130" r="18" fill="#f59e0b" />
-    <path d="M 230 118 L 233 126 L 242 127 L 235 133 L 237 141 L 230 136 L 223 141 L 225 133 L 218 127 L 227 126 Z" fill="#ffffff" />
+
+  <rect width="512" height="512" rx="112" fill="#06040D"/>
+
+  <g transform="translate(256 256) scale(0.86) translate(-256 -256)">
+    <path d="M92 92 H420 V420 H92 Z" fill="url(#ribbon)" stroke="#8B5CF6" stroke-opacity="0.45" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M256 24 L488 256 L256 488 L24 256 Z" fill="url(#knot)" stroke="#C4B5FD" stroke-opacity="0.35" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M92 152 V92 H152" fill="none" stroke="#3B0F73" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M420 360 V420 H360" fill="none" stroke="#3B0F73" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M256 118 L394 256 L256 394 L118 256 Z" fill="none" stroke="#1B0D38" stroke-width="20" stroke-linejoin="round"/>
+    <path d="M150 150 H362 V362 H150 Z" fill="none" stroke="#2A1156" stroke-width="16" stroke-linejoin="round"/>
+    <path d="M256 118 L394 256 L256 394 L118 256 Z" fill="none" stroke="#8B5CF6" stroke-opacity="0.5" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="330" cy="220" r="180" fill="url(#neb)"/>
+    <g stroke="#E9D5FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9">
+      <path d="M150 150 L176 196 L154 206 L188 252"/>
+      <path d="M120 258 L154 268 L138 288 L170 302"/>
+      <path d="M196 108 L206 142 L186 150 L204 184"/>
+    </g>
+    <path d="M166 168 C210 146 292 140 344 150 C352 152 352 162 342 172 L196 336 C188 346 192 356 204 358 C258 364 318 356 350 336"
+          fill="none" stroke="#2E1065" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    <path d="M166 168 C210 146 292 140 344 150 C352 152 352 162 342 172 L196 336 C188 346 192 356 204 358 C258 364 318 356 350 336"
+          fill="none" stroke="url(#zink)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="256" y="445" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="36" font-weight="900" letter-spacing="2">
-    PEDIDOS <tspan fill="#34d399">TRINIDAD</tspan>
-  </text>
 </svg>

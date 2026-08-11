@@ -49,6 +49,16 @@ import {
 } from '@/presentation/utils/audioAlerts';
 import { useRealtimeEvents } from '@/presentation/hooks/useRealtimeEvents';
 import { usePushNotifications } from '@/presentation/hooks/usePushNotifications';
+import { AnimatePresence, motion } from 'motion/react';
+import {
+  Badge,
+  Button,
+  Panel,
+  Stat,
+  StaggerList,
+  Tabs,
+} from '@/presentation/components/ui';
+import { bs } from '@/presentation/lib/utils';
 
 export default function DriverDashboardPage() {
   const { data: session, status } = useSession();
@@ -208,8 +218,8 @@ export default function DriverDashboardPage() {
 
   if (status === 'loading') {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-24 text-center text-slate-400">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center text-ink-mute">
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-xs">Cargando panel de repartidor...</p>
       </div>
     );
@@ -220,12 +230,12 @@ export default function DriverDashboardPage() {
   if (!session?.user || (userRole !== 'DRIVER' && userRole !== 'ADMIN')) {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <div className="glass-panel rounded-3xl p-8 border border-emerald-500/30 shadow-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4">
+        <div className="rune-panel rounded-3xl p-8 border border-violet-500/30 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-violet-500/20 text-violet-400 flex items-center justify-center mx-auto mb-4">
             <Bike className="w-7 h-7" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Portal de Repartidores en Moto</h2>
-          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+          <p className="text-xs text-ink-mute mb-6 leading-relaxed">
             Inicia sesión con tu cuenta de repartidor o utiliza el usuario de demostración de Carlos Repartidor para recibir, recoger y entregar pedidos en Trinidad.
           </p>
           <div className="space-y-3">
@@ -237,14 +247,14 @@ export default function DriverDashboardPage() {
                   callbackUrl: '/driver/dashboard',
                 })
               }
-              className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3 px-4 rounded-xl bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 transition-all"
             >
               <span>Acceder como Carlos Repartidor (Demo Moto)</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <Link
               href="/auth/login"
-              className="block w-full py-3 px-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-300 text-xs font-semibold"
+              className="block w-full py-3 px-4 rounded-xl bg-void-700 border border-surface-line hover:border-surface-line text-ink-soft text-xs font-semibold"
             >
               Iniciar sesión con otra cuenta
             </Link>
@@ -258,31 +268,28 @@ export default function DriverDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Driver Header Profile & Availability */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-gradient-to-r from-emerald-950/40 via-slate-900/60 to-slate-900/40 p-6 rounded-3xl border border-emerald-500/30">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
-            <Bike className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
-                Moto Driver
-              </span>
-              <span className="text-xs text-slate-400 font-mono">
-                {user?.driverCode ? `Código: ${user.driverCode}` : 'Trinidad Express (DRV-777)'}
+      {/* Perfil del repartidor y disponibilidad */}
+      <Panel className="mb-8 flex flex-col justify-between gap-5 p-6 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-info/35 bg-info/12 text-info">
+            <Bike className="h-7 w-7" />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="info">Repartidor</Badge>
+              <span className="font-mono text-[11px] text-ink-mute">
+                {user?.driverCode || 'DRV-777'}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white mt-1">
-              {user?.name || 'Carlos Repartidor Flash'}
+            <h1 className="mt-1.5 truncate font-display text-xl font-bold text-white sm:text-2xl">
+              {user?.name || 'Repartidor'}
             </h1>
-            <p className="text-xs text-slate-400">
-              {user?.phone ? `Tel: ${user.phone}` : '+591 78901234'} • Trinidad, Beni
+            <p className="mt-0.5 text-[12px] text-ink-mute">
+              {user?.phone || '+591 78901234'} · Trinidad, Beni
             </p>
           </div>
         </div>
 
-        {/* Toggle Online/Offline & Sound */}
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
@@ -291,224 +298,196 @@ export default function DriverDashboardPage() {
               setSoundEnabled(next);
               if (next) playDriverNewDeliveryAlert();
             }}
-            className={`px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border ${
+            title="Alertas sonoras de nuevos pedidos"
+            className={`flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2.5 text-[12px] font-semibold transition-colors ${
               soundEnabled
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                : 'bg-slate-900 text-slate-500 border-slate-800'
+                ? 'border-ok/35 bg-ok/10 text-ok-soft hover:bg-ok/20'
+                : 'border-surface-line bg-void-800/70 text-ink-mute hover:text-white'
             }`}
-            title="Alertas de sonido para nuevos pedidos"
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4" />}
-            <span className="hidden sm:inline">{soundEnabled ? 'Sonido Activo' : 'Silencio'}</span>
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            <span className="hidden sm:inline">{soundEnabled ? 'Sonido' : 'Silencio'}</span>
           </button>
 
-          {/* Botón de Notificaciones Push Web con pantalla bloqueada */}
           {!pushSubscribed && pushPermission !== 'granted' ? (
             <button
               type="button"
               onClick={() => subscribePush()}
               disabled={pushLoading}
-              className="px-3.5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all animate-pulse"
-              title="Activar notificaciones push en segundo plano para moto"
+              title="Activar notificaciones en segundo plano"
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-warn/35 bg-warn/12 px-3.5 py-2.5 text-[12px] font-semibold text-warn-soft transition-colors hover:bg-warn/20 disabled:opacity-50"
             >
-              <Bell className="w-4 h-4 text-amber-400" />
-              <span className="hidden sm:inline">Activar Notificaciones Push</span>
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Activar push</span>
             </button>
           ) : (
             <button
               type="button"
-              onClick={() => sendTestPush('🛵 ¡Alerta de Prueba Repartidor!', 'Notificación push en segundo plano funcionando en Trinidad.')}
-              className="px-3 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5"
-              title="Notificaciones push activas"
+              onClick={() =>
+                sendTestPush(
+                  'Alerta de prueba',
+                  'Las notificaciones en segundo plano funcionan correctamente.'
+                )
+              }
+              title="Notificaciones activas"
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-ok/35 bg-ok/10 px-3 py-2.5 text-[12px] font-semibold text-ok-soft"
             >
-              <Bell className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline">Push OK</span>
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Push ok</span>
             </button>
           )}
 
-          {/* Botón de Acceso Rápido a Billetera */}
           <button
             type="button"
             onClick={() => setActiveTab('wallet')}
-            className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
-            title="Ver Billetera y Cierre de Turno"
+            title="Billetera y cierre de turno"
+            className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-violet-400/35 bg-violet-500/12 px-3.5 py-2.5 text-[12px] font-semibold text-violet-200 transition-colors hover:bg-violet-500/20"
           >
-            <Wallet className="w-4 h-4 text-emerald-400" />
-            <span>{todayEarningsVal.toFixed(2)} Bs Hoy</span>
+            <Wallet className="h-4 w-4" />
+            <span className="tabular">{bs(todayEarningsVal)} Bs hoy</span>
           </button>
 
-          {/* Toggle Online */}
-          <button
+          <motion.button
             type="button"
             onClick={() => setIsOnline(!isOnline)}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-lg ${
+            whileTap={{ scale: 0.96 }}
+            className={`sheen flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-display text-[12px] font-bold transition-colors ${
               isOnline
-                ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'
-                : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+                ? 'border border-ok/40 bg-ok/20 text-ok-soft shadow-glow-ok'
+                : 'border border-ember/40 bg-ember/15 text-ember-soft'
             }`}
           >
-            <Power className="w-4 h-4" />
-            <span>{isOnline ? 'EN SERVICIO (ONLINE)' : 'DESCONECTADO'}</span>
-          </button>
+            <Power className="h-4 w-4" />
+            {isOnline ? 'En servicio' : 'Desconectado'}
+          </motion.button>
         </div>
-      </div>
+      </Panel>
 
-      {/* Banner de Pedidos Disponibles Esperando */}
-      {availableOrders.length > 0 && isOnline && activeTab !== 'available' && (
-        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-900/60 to-slate-900 border-2 border-emerald-500/60 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black shrink-0 animate-bounce">
-              <Bike className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-400 text-slate-950 uppercase tracking-wider">
-                  ¡Nuevos Pedidos!
-                </span>
-                <span className="text-xs text-emerald-300 font-semibold">
-                  {availableOrders.length} pedido{availableOrders.length > 1 ? 's' : ''} disponible{availableOrders.length > 1 ? 's' : ''} para entrega (+10.00 Bs c/u)
-                </span>
-              </div>
-              <h4 className="text-base font-black text-white mt-0.5">
-                Hay restaurantes en Trinidad esperando recojo. Acepta el pedido para iniciar la ruta.
-              </h4>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('available')}
-            className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all shrink-0"
+      {/* Aviso de pedidos esperando */}
+      <AnimatePresence>
+        {availableOrders.length > 0 && isOnline && activeTab !== 'available' && (
+          <motion.div
+            initial={{ opacity: 0, y: -14, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto', marginBottom: 24 }}
+            exit={{ opacity: 0, y: -10, height: 0, marginBottom: 0 }}
+            className="overflow-hidden"
           >
-            <span>Ver Pedidos en Espera</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+            <div className="flex flex-col justify-between gap-4 rounded-2xl border border-arc/45 bg-arc/10 p-4 shadow-glow-arc sm:flex-row sm:items-center">
+              <div className="flex items-center gap-3">
+                <motion.span
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-arc/40 bg-arc/20 text-arc-bright"
+                >
+                  <Bike className="h-5 w-5" />
+                </motion.span>
+                <div>
+                  <p className="flex flex-wrap items-center gap-2">
+                    <Badge tone="arc" dot>
+                      Nuevos pedidos
+                    </Badge>
+                    <span className="text-[12px] font-semibold text-arc-soft">
+                      {availableOrders.length} disponible
+                      {availableOrders.length > 1 ? 's' : ''} · +10,00 Bs c/u
+                    </span>
+                  </p>
+                  <p className="mt-1 font-display text-[14px] font-bold text-white">
+                    Hay locales esperando recojo. Aceptá para iniciar la ruta.
+                  </p>
+                </div>
+              </div>
+
+              <Button size="sm" onClick={() => setActiveTab('available')} className="shrink-0">
+                Ver pedidos
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Métricas */}
+      <StaggerList className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div onClick={() => setActiveTab('wallet')} className="cursor-pointer">
+          <Stat
+            label="Ganancias hoy"
+            value={`${bs(todayEarningsVal)} Bs`}
+            sub="10 Bs por viaje · ver billetera"
+            icon={Wallet}
+            tone="arc"
+          />
         </div>
-      )}
+        <Stat
+          label="Entregas hoy"
+          value={stats.todayDeliveries}
+          sub={`+${bs(todayEarningsVal)} Bs ganados`}
+          icon={Bike}
+          tone="violet"
+        />
+        <Stat
+          label="Total entregas"
+          value={stats.totalDeliveries}
+          sub="Completadas con éxito"
+          icon={CheckCircle2}
+          tone="ok"
+        />
+        <Stat
+          label="Calificación"
+          value={`${stats.rating} / 5`}
+          sub={`${stats.totalReviews || 0} reseñas`}
+          icon={Star}
+          tone="warn"
+        />
+      </StaggerList>
 
-      {/* Stats bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <div
-          onClick={() => setActiveTab('wallet')}
-          className="p-4 rounded-2xl glass-panel border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition-all bg-slate-950/60"
-        >
-          <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold flex items-center justify-between">
-            <span>Ganancias Hoy</span>
-            <Wallet className="w-3.5 h-3.5 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-black text-emerald-400 mt-1">
-            {todayEarningsVal.toFixed(2)} Bs
-          </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">10 Bs por viaje • Ver Billetera ➔</div>
-        </div>
+      <AnimatePresence>
+        {feedback && (
+          <motion.div
+            role="status"
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center gap-2.5 rounded-2xl border border-violet-400/35 bg-violet-500/10 p-4 text-[13px] text-violet-200">
+              <Sparkles className="h-4 w-4 shrink-0" />
+              {feedback}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-slate-950/60">
-          <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-            Entregas Hoy
-          </div>
-          <div className="text-2xl font-black text-white mt-1">
-            {stats.todayDeliveries}
-          </div>
-          <div className="text-[10px] text-emerald-400 mt-0.5">+{todayEarningsVal.toFixed(2)} Bs ganados</div>
-        </div>
-
-        <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-slate-950/60">
-          <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-            Total Entregas
-          </div>
-          <div className="text-2xl font-black text-white mt-1">
-            {stats.totalDeliveries}
-          </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">Completadas con éxito</div>
-        </div>
-
-        <div className="p-4 rounded-2xl glass-panel border border-slate-800 bg-slate-950/60">
-          <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-            Calificación
-          </div>
-          <div className="text-2xl font-black text-amber-400 mt-1 flex items-center gap-1">
-            <span>{stats.rating}</span>
-            <span className="text-sm font-normal text-slate-400">/ 5.0 ⭐</span>
-          </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">Excelente servicio</div>
-        </div>
-      </div>
-
-      {feedback && (
-        <div className="mb-6 p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in">
-          <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{feedback}</span>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-6 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('available')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'available'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <ShoppingBag className="w-3.5 h-3.5" />
-          <span>Pedidos Disponibles ({availableOrders.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('active')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'active'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <Bike className="w-3.5 h-3.5" />
-          <span>Mi Entrega en Curso ({activeDeliveries.length})</span>
-        </button>
-
-        {/* PESTAÑA DE BILLETERA Y RESUMEN DEL DÍA */}
-        <button
-          onClick={() => setActiveTab('wallet')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'wallet'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <Wallet className="w-3.5 h-3.5" />
-          <span>💼 Billetera & Turno ({todayEarningsVal.toFixed(0)} Bs)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'history'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Historial ({completedDeliveries.length})</span>
-        </button>
+      {/* Pestañas */}
+      <div className="mb-6">
+        <Tabs
+          layoutKey="driver-tabs"
+          value={activeTab}
+          onChange={setActiveTab}
+          tabs={[
+            { value: 'available', label: 'Disponibles', icon: ShoppingBag, count: availableOrders.length },
+            { value: 'active', label: 'En curso', icon: Bike, count: activeDeliveries.length },
+            { value: 'wallet', label: 'Billetera', icon: Wallet },
+            { value: 'history', label: 'Historial', icon: Clock, count: completedDeliveries.length },
+          ]}
+        />
       </div>
 
       {/* TAB 1: PEDIDOS DISPONIBLES (LISTOS PARA RECOGER) */}
       {activeTab === 'available' && (
         <div className="space-y-4">
           {!isOnline ? (
-            <div className="p-8 rounded-2xl glass-panel border border-slate-800 text-center text-xs text-slate-400">
-              <Power className="w-8 h-8 mx-auto mb-2 text-rose-400" />
+            <div className="p-8 rounded-2xl rune-panel border border-surface-line text-center text-xs text-ink-mute">
+              <Power className="w-8 h-8 mx-auto mb-2 text-ember" />
               <p className="font-bold text-white">Estás actualmente desconectado</p>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-[11px] text-ink-faint mt-1">
                 Activa tu estado &quot;En Servicio&quot; en la parte superior para recibir y tomar pedidos en tu moto.
               </p>
             </div>
           ) : availableOrders.length === 0 ? (
-            <div className="p-8 rounded-2xl glass-panel border border-slate-800 text-center text-xs text-slate-400">
-              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400/60" />
+            <div className="p-8 rounded-2xl rune-panel border border-surface-line text-center text-xs text-ink-mute">
+              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-violet-400/60" />
               <p className="font-bold text-white">No hay pedidos pendientes de repartidor</p>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-[11px] text-ink-faint mt-1">
                 Cuando una cocina termine de preparar y marcar listo un pedido, aparecerá aquí con sonido de alerta al instante.
               </p>
             </div>
@@ -521,54 +500,54 @@ export default function DriverDashboardPage() {
                 return (
                   <div
                     key={order.id}
-                    className="p-5 rounded-3xl glass-panel border-2 border-emerald-500/40 hover:border-emerald-500/80 transition-all space-y-4 shadow-xl bg-gradient-to-b from-slate-900/90 to-slate-900/60"
+                    className="p-5 rounded-3xl rune-panel border-2 border-violet-500/40 hover:border-violet-500/80 transition-all space-y-4 shadow-xl bg-gradient-to-b from-void-700/90 to-void-700/60"
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-violet-500/20 text-violet-300 border border-violet-500/40">
                             ORD-#{order.id.slice(0, 6).toUpperCase()}
                           </span>
                           {order.batchCode && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-arc/20 text-arc-soft border border-arc/40">
                               Lote Multi-Local
                             </span>
                           )}
                         </div>
                         <h4 className="font-black text-white text-base mt-1.5 flex items-center gap-1.5">
-                          <Store className="w-4 h-4 text-amber-400" />
+                          <Store className="w-4 h-4 text-warn" />
                           <span>{order.business?.name}</span>
                         </h4>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-ink-mute">
                           {order.business?.space?.name || 'Patio Gastronómico'} • {order.business?.space?.location || 'Trinidad'}
                         </p>
                       </div>
 
                       <div className="text-right">
-                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Tu Ganancia</div>
-                        <div className="text-xl font-black text-emerald-400">+10.00 Bs</div>
-                        <span className="text-[10px] text-slate-500">Tarifa fija moto</span>
+                        <div className="text-[10px] text-ink-mute uppercase tracking-wider font-semibold">Tu Ganancia</div>
+                        <div className="text-xl font-black text-violet-400">+10.00 Bs</div>
+                        <span className="text-[10px] text-ink-faint">Tarifa fija moto</span>
                       </div>
                     </div>
 
                     {/* Delivery Destination */}
-                    <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs space-y-2.5">
+                    <div className="p-3.5 rounded-2xl bg-void-700/80 border border-surface-line text-xs space-y-2.5">
                       <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                        <MapPin className="w-4 h-4 text-ember shrink-0 mt-0.5" />
                         <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold">Destino de Entrega:</span>
+                          <span className="text-[10px] text-ink-mute uppercase font-bold">Destino de Entrega:</span>
                           <p className="font-black text-white text-xs mt-0.5">{order.deliveryAddress}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                        <span>Cliente: <strong className="text-slate-200">{order.customer?.name}</strong></span>
+                      <div className="flex items-center justify-between pt-2 border-t border-surface-line text-[11px] text-ink-mute">
+                        <span>Cliente: <strong className="text-ink">{order.customer?.name}</strong></span>
                         <span>{order.items?.length || 0} platos ({order.totalPrice.toFixed(2)} Bs)</span>
                       </div>
 
                       {order.notes && (
-                        <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] italic">
+                        <div className="p-2 rounded-xl bg-warn/10 border border-warn/20 text-warn-soft text-[11px] italic">
                           Nota cliente: &quot;{order.notes}&quot;
                         </div>
                       )}
@@ -578,7 +557,7 @@ export default function DriverDashboardPage() {
                       <button
                         type="button"
                         onClick={() => setSelectedMapOrder(order)}
-                        className="py-3 px-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-emerald-500/40 text-emerald-400 hover:text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                        className="py-3 px-3.5 rounded-2xl bg-void-700 hover:bg-surface-raised border border-violet-500/40 text-violet-400 hover:text-violet-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                         title="Ver ruta en mapa interactivo"
                       >
                         <Route className="w-4 h-4" />
@@ -590,7 +569,7 @@ export default function DriverDashboardPage() {
                         type="button"
                         disabled={isActing}
                         onClick={() => handleAcceptOrder(order.id)}
-                        className="flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 ring-2 ring-emerald-400/40"
+                        className="flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-violet-500 to-arc hover:from-violet-400 hover:to-arc text-white text-xs font-black shadow-lg shadow-violet-500/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 ring-2 ring-violet-400/40"
                       >
                         <Bike className="w-4 h-4" />
                         <span>{isActing ? 'Asignando...' : '🏍️ Aceptar Pedido (+10.00 Bs)'}</span>
@@ -608,15 +587,15 @@ export default function DriverDashboardPage() {
       {activeTab === 'active' && (
         <div className="space-y-6">
           {activeDeliveries.length === 0 ? (
-            <div className="p-8 rounded-2xl glass-panel border border-slate-800 text-center text-xs text-slate-400">
-              <Bike className="w-8 h-8 mx-auto mb-2 text-slate-500" />
+            <div className="p-8 rounded-2xl rune-panel border border-surface-line text-center text-xs text-ink-mute">
+              <Bike className="w-8 h-8 mx-auto mb-2 text-ink-faint" />
               <p className="font-bold text-white">No tienes entregas activas en este momento</p>
-              <p className="text-[11px] text-slate-500 mt-1 mb-4">
+              <p className="text-[11px] text-ink-faint mt-1 mb-4">
                 Revisa la pestaña de pedidos disponibles para tomar una entrega.
               </p>
               <button
                 onClick={() => setActiveTab('available')}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-violet-500 text-white font-bold text-xs"
               >
                 Ver Pedidos Disponibles
               </button>
@@ -653,11 +632,11 @@ export default function DriverDashboardPage() {
               return (
                 <div
                   key={order.id}
-                  className="p-6 rounded-3xl glass-panel border-2 border-emerald-500/50 space-y-5 shadow-2xl shadow-emerald-950/20 bg-slate-950"
+                  className="p-6 rounded-3xl rune-panel border-2 border-violet-500/50 space-y-5 shadow-2xl shadow-violet-950/20 bg-void"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-line">
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30 mb-2">
                         <Bike className="w-3.5 h-3.5 animate-pulse" />
                         <span>Entrega en Curso • En Ruta</span>
                       </div>
@@ -670,15 +649,15 @@ export default function DriverDashboardPage() {
                       <button
                         type="button"
                         onClick={() => setSelectedMapOrder(order)}
-                        className="py-2 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
+                        className="py-2 px-3.5 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/40 text-violet-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
                       >
-                        <Route className="w-4 h-4 text-emerald-400" />
+                        <Route className="w-4 h-4 text-violet-400" />
                         <span>🗺️ Abrir Mapa Interactivo</span>
                       </button>
 
                       <div className="text-right">
-                        <span className="text-[10px] text-slate-400 uppercase">Tarifa Delivery</span>
-                        <div className="text-xl font-black text-emerald-400">+10.00 Bs</div>
+                        <span className="text-[10px] text-ink-mute uppercase">Tarifa Delivery</span>
+                        <div className="text-xl font-black text-violet-400">+10.00 Bs</div>
                       </div>
                     </div>
                   </div>
@@ -689,9 +668,9 @@ export default function DriverDashboardPage() {
                       href={navigateToCustomerGpsUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 text-sm sm:text-base font-black shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2.5 transition-all ring-2 ring-emerald-400/50 transform active:scale-98"
+                      className="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-violet-500 via-arc to-violet-400 hover:from-violet-400 hover:to-arc-soft text-white text-sm sm:text-base font-black shadow-xl shadow-violet-500/30 flex items-center justify-center gap-2.5 transition-all ring-2 ring-violet-400/50 transform active:scale-98"
                     >
-                      <Navigation className="w-5 h-5 animate-pulse text-slate-950 shrink-0" />
+                      <Navigation className="w-5 h-5 animate-pulse text-void shrink-0" />
                       <span className="uppercase tracking-wide font-black">
                         🧭 Iniciar Ruta en Google Maps (GPS Hablado)
                       </span>
@@ -703,7 +682,7 @@ export default function DriverDashboardPage() {
                         href={navigateToStoreGpsUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="py-2.5 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
+                        className="py-2.5 px-3 rounded-xl bg-warn/10 hover:bg-warn/20 border border-warn/30 text-warn-soft text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
                       >
                         <Store className="w-3.5 h-3.5 shrink-0" />
                         <span>GPS a Cocina</span>
@@ -713,7 +692,7 @@ export default function DriverDashboardPage() {
                         href={navigateToCustomerGpsUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="py-2.5 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
+                        className="py-2.5 px-3 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
                       >
                         <MapPin className="w-3.5 h-3.5 shrink-0" />
                         <span>GPS a Cliente</span>
@@ -724,7 +703,7 @@ export default function DriverDashboardPage() {
                           href={whatsAppUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="py-2.5 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
+                          className="py-2.5 px-3 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/40 text-violet-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
                         >
                           <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                           <span>WhatsApp</span>
@@ -734,7 +713,7 @@ export default function DriverDashboardPage() {
                       {cleanPhone && (
                         <a
                           href={`tel:${cleanPhone}`}
-                          className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
+                          className="py-2.5 px-3 rounded-xl bg-void-700 hover:bg-surface-raised border border-surface-line text-ink text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
                         >
                           <Phone className="w-3.5 h-3.5 shrink-0" />
                           <span>Llamar</span>
@@ -745,18 +724,18 @@ export default function DriverDashboardPage() {
 
                   {/* Cash collection alert if applicable */}
                   {isCash ? (
-                    <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs flex items-center justify-between gap-4">
+                    <div className="p-4 rounded-2xl bg-violet-950/40 border border-warn/40 text-warn-soft text-xs flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
-                        <Banknote className="w-5 h-5 text-amber-400 shrink-0" />
+                        <Banknote className="w-5 h-5 text-warn shrink-0" />
                         <div>
                           <strong className="block text-white">Cobro en Efectivo contra Entrega:</strong>
-                          <span>Debes cobrar <strong className="text-amber-400 font-bold">{order.totalPrice.toFixed(2)} Bs</strong> en efectivo al cliente al entregar.</span>
+                          <span>Debes cobrar <strong className="text-warn font-bold">{order.totalPrice.toFixed(2)} Bs</strong> en efectivo al cliente al entregar.</span>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/40 text-blue-300 text-xs flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0" />
+                    <div className="p-4 rounded-2xl bg-violet-950/40 border border-info/40 text-info-soft text-xs flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-info shrink-0" />
                       <div>
                         <strong className="block text-white">Pago Digital Previsto:</strong>
                         <span>El cliente ya pagó mediante QR/Tarjeta. <strong className="text-white font-bold">NO cobrar en efectivo</strong>.</span>
@@ -767,13 +746,13 @@ export default function DriverDashboardPage() {
                   {/* Two Step Route Details: Pickup -> Dropoff */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                     {/* Step 1: Restaurant Pickup */}
-                    <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
-                      <div className="font-bold text-amber-400 flex items-center gap-1.5">
+                    <div className="p-4 rounded-2xl bg-void-700/80 border border-surface-line space-y-2">
+                      <div className="font-bold text-warn flex items-center gap-1.5">
                         <Store className="w-4 h-4" />
                         <span>1. Punto de Retiro (Cocina del Comercio)</span>
                       </div>
                       <div className="text-sm font-black text-white">{order.business?.name}</div>
-                      <p className="text-slate-400 text-[11px]">
+                      <p className="text-ink-mute text-[11px]">
                         {order.business?.space?.name || 'Local'} • {order.business?.space?.location || 'Trinidad'}
                       </p>
                       <div className="pt-1">
@@ -781,7 +760,7 @@ export default function DriverDashboardPage() {
                           href={navigateToStoreGpsUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-amber-400 hover:underline font-bold text-[11px]"
+                          className="inline-flex items-center gap-1.5 text-warn hover:underline font-bold text-[11px]"
                         >
                           <Navigation className="w-3.5 h-3.5" />
                           <span>Abrir GPS al Local</span>
@@ -790,33 +769,33 @@ export default function DriverDashboardPage() {
                     </div>
 
                     {/* Step 2: Customer Delivery */}
-                    <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
-                      <div className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <div className="p-4 rounded-2xl bg-void-700/80 border border-surface-line space-y-2">
+                      <div className="font-bold text-violet-400 flex items-center gap-1.5">
                         <MapPin className="w-4 h-4" />
                         <span>2. Destino de Entrega (Domicilio del Cliente)</span>
                       </div>
                       <div className="text-sm font-black text-white">{order.deliveryAddress}</div>
                       
                       {order.notes && (
-                        <p className="text-amber-300 text-[11px] bg-amber-950/30 p-2 rounded-xl border border-amber-500/20 italic">
+                        <p className="text-warn-soft text-[11px] bg-violet-950/30 p-2 rounded-xl border border-warn/20 italic">
                           Nota: &quot;{order.notes}&quot;
                         </p>
                       )}
 
-                      <div className="flex flex-wrap items-center gap-2 text-slate-300 text-[11px] pt-1">
+                      <div className="flex flex-wrap items-center gap-2 text-ink-soft text-[11px] pt-1">
                         <span>Cliente: <strong>{order.customer?.name}</strong></span>
                       </div>
                     </div>
                   </div>
 
                   {/* Items breakdown */}
-                  <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs">
-                    <span className="text-[11px] font-bold text-slate-400 block mb-1">Detalle de Platos a Entregar:</span>
+                  <div className="p-3.5 rounded-2xl bg-void-700/60 border border-surface-line text-xs">
+                    <span className="text-[11px] font-bold text-ink-mute block mb-1">Detalle de Platos a Entregar:</span>
                     <div className="space-y-1">
                       {order.items?.map((item: any) => (
-                        <div key={item.id} className="text-slate-300 flex justify-between">
+                        <div key={item.id} className="text-ink-soft flex justify-between">
                           <span>• {item.quantity}x {item.product?.name || 'Plato'}</span>
-                          <span className="font-semibold text-slate-400">{item.subtotal.toFixed(2)} Bs</span>
+                          <span className="font-semibold text-ink-mute">{item.subtotal.toFixed(2)} Bs</span>
                         </div>
                       ))}
                     </div>
@@ -827,7 +806,7 @@ export default function DriverDashboardPage() {
                     type="button"
                     disabled={isActing}
                     onClick={() => setRatingModalOrder(order)}
-                    className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-arc-deep hover:from-violet-500 hover:to-arc text-white font-black text-sm shadow-xl shadow-violet-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-5 h-5" />
                     <span>✓ Confirmar Entrega en Puerta del Cliente (Calificar)</span>
@@ -853,8 +832,8 @@ export default function DriverDashboardPage() {
       {activeTab === 'history' && (
         <div className="space-y-6">
           {completedDeliveries.length === 0 ? (
-            <div className="p-8 rounded-2xl glass-panel border border-slate-800 text-center text-xs text-slate-400">
-              <Clock className="w-8 h-8 mx-auto mb-2 text-slate-500" />
+            <div className="p-8 rounded-2xl rune-panel border border-surface-line text-center text-xs text-ink-mute">
+              <Clock className="w-8 h-8 mx-auto mb-2 text-ink-faint" />
               <p className="font-bold text-white">Aún no has completado entregas</p>
             </div>
           ) : (
@@ -862,38 +841,38 @@ export default function DriverDashboardPage() {
               {completedDeliveries.map((order) => (
                 <div
                   key={order.id}
-                  className="p-4 rounded-2xl glass-panel border border-slate-800 space-y-2 text-xs"
+                  className="p-4 rounded-2xl rune-panel border border-surface-line space-y-2 text-xs"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-white">ORD-#{order.id.slice(0, 6).toUpperCase()}</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-300">
                           Entregado
                         </span>
                         {order.driverRating && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-amber-300" />
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-warn/20 text-warn-soft border border-warn/40 flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-warn-soft" />
                             <span>{order.driverRating}.0 ★</span>
                           </span>
                         )}
                       </div>
-                      <p className="text-slate-400 text-[11px] mt-1">
+                      <p className="text-ink-mute text-[11px] mt-1">
                         {order.business?.name} ➔ {order.deliveryAddress}
                       </p>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className="font-black text-emerald-400 text-sm">+{Number(order.deliveryFee || 10).toFixed(2)} Bs</div>
-                      <div className="text-[10px] text-slate-500">
+                      <div className="font-black text-violet-400 text-sm">+{Number(order.deliveryFee || 10).toFixed(2)} Bs</div>
+                      <div className="text-[10px] text-ink-faint">
                         {new Date(order.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                   </div>
 
                   {order.driverReview && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 italic flex items-start gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="mt-2 p-2.5 rounded-xl bg-void/60 border border-surface-line text-[11px] text-ink-soft italic flex items-start gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-warn shrink-0 mt-0.5" />
                       <span>&quot;{order.driverReview}&quot;</span>
                     </div>
                   )}
@@ -904,35 +883,35 @@ export default function DriverDashboardPage() {
 
           {/* Sección de Reseñas de Clientes si existen */}
           {stats.reviews && stats.reviews.length > 0 && (
-            <div className="p-6 rounded-3xl bg-slate-900/80 border border-amber-500/30 space-y-3">
+            <div className="p-6 rounded-3xl bg-void-700/80 border border-warn/30 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-amber-400" />
+                  <Award className="w-5 h-5 text-warn" />
                   <h4 className="font-bold text-white text-sm">Reseñas y Felicitaciones de Clientes</h4>
                 </div>
-                <span className="text-xs font-bold text-amber-400">{stats.reviews.length} opiniones registradas</span>
+                <span className="text-xs font-bold text-warn">{stats.reviews.length} opiniones registradas</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                 {stats.reviews.map((rev: any, idx: number) => (
-                  <div key={idx} className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-1.5 text-xs">
+                  <div key={idx} className="p-3.5 rounded-2xl bg-void/70 border border-surface-line/80 space-y-1.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-white">{rev.customerName}</span>
-                      <div className="flex items-center gap-0.5 text-amber-400">
+                      <div className="flex items-center gap-0.5 text-warn">
                         {[1, 2, 3, 4, 5].map((s) => (
                           <Star
                             key={s}
-                            className={`w-3 h-3 ${s <= rev.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-700'}`}
+                            className={`w-3 h-3 ${s <= rev.rating ? 'fill-warn text-warn' : 'text-ink-faint'}`}
                           />
                         ))}
                       </div>
                     </div>
                     {rev.review ? (
-                      <p className="text-slate-300 italic text-[11px]">&quot;{rev.review}&quot;</p>
+                      <p className="text-ink-soft italic text-[11px]">&quot;{rev.review}&quot;</p>
                     ) : (
-                      <p className="text-slate-500 text-[11px]">Calificación con 5 estrellas en puerta</p>
+                      <p className="text-ink-faint text-[11px]">Calificación con 5 estrellas en puerta</p>
                     )}
-                    <span className="text-[10px] text-slate-500 block">
+                    <span className="text-[10px] text-ink-faint block">
                       {new Date(rev.date).toLocaleDateString()}
                     </span>
                   </div>

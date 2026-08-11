@@ -1,5 +1,5 @@
-// Service Worker para Pedidos Trinidad (PWA & Web Push)
-const CACHE_NAME = 'pedidos-trinidad-v1';
+// Service Worker de En Z (PWA & Web Push)
+const CACHE_NAME = 'en-z-v2';
 const OFFLINE_FALLBACK = '/';
 
 self.addEventListener('install', (event) => {
@@ -19,12 +19,12 @@ self.addEventListener('activate', (event) => {
 // 🔔 Manejo de Notificaciones Push entrantes en segundo plano
 self.addEventListener('push', (event) => {
   let data = {
-    title: '🔔 Pedidos Trinidad',
+    title: 'En Z',
     body: 'Tienes una nueva actualización de pedido.',
     icon: '/icons/icon-192x192.svg',
     badge: '/icons/icon-192x192.svg',
     url: '/',
-    tag: 'pedidos-trinidad-notification',
+    tag: 'en-z-notification',
     vibrate: [200, 100, 200, 100, 200, 100, 400],
     data: {},
   };
@@ -38,7 +38,7 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const title = data.title || '🔔 Pedidos Trinidad';
+  const title = data.title || 'En Z';
   const options = {
     body: data.body,
     icon: data.icon || '/icons/icon-192x192.svg',
@@ -76,7 +76,7 @@ self.addEventListener('notificationclick', (event) => {
         includeUncontrolled: true,
       });
 
-      // Si ya hay una pestaña abierta de Pedidos Trinidad, enfocarla y navegar
+      // Si ya hay una pestaña abierta de En Z, enfocarla y navegar
       for (const client of allClients) {
         if (client.url && 'focus' in client) {
           await client.focus();

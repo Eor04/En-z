@@ -236,13 +236,13 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Search Bar */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-ink-faint absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por plato, ingrediente o categoría..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-xs text-white placeholder-slate-500 outline-none transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-xs text-white placeholder-ink-faint outline-none transition-all"
           />
         </div>
 
@@ -250,7 +250,7 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
         <button
           type="button"
           onClick={openCreateModal}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all shrink-0"
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-arc hover:from-violet-500 hover:to-arc text-white font-bold text-xs shadow-lg shadow-violet-600/20 flex items-center gap-2 transition-all shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Agregar Nuevo Plato / Producto</span>
@@ -258,11 +258,11 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
       </div>
 
       {/* Products Table */}
-      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-800">
+      <div className="rune-panel rounded-2xl overflow-hidden border border-surface-line">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400">
+              <tr className="border-b border-surface-line bg-void-700/60 text-ink-mute">
                 <th className="py-3 px-4 font-semibold">Producto</th>
                 <th className="py-3 px-4 font-semibold">Categorías</th>
                 <th className="py-3 px-4 font-semibold">Precio (Bs)</th>
@@ -271,32 +271,32 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                 <th className="py-3 px-4 font-semibold text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-surface-line/60">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-8 text-center text-ink-faint">
                     No se encontraron productos en el menú con ese criterio de búsqueda.
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-900/40 transition-colors">
+                  <tr key={p.id} className="hover:bg-void-700/40 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         {p.imageUrl ? (
                           <img
                             src={p.imageUrl}
                             alt={p.name}
-                            className="w-10 h-10 rounded-lg object-cover bg-slate-800 shrink-0"
+                            className="w-10 h-10 rounded-lg object-cover bg-surface-raised shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-600 shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-surface-raised flex items-center justify-center text-ink-faint shrink-0">
                             <Package className="w-5 h-5" />
                           </div>
                         )}
                         <div>
                           <div className="font-bold text-white text-xs">{p.name}</div>
-                          <div className="text-[11px] text-slate-400 line-clamp-1 max-w-xs">
+                          <div className="text-[11px] text-ink-mute line-clamp-1 max-w-xs">
                             {p.description}
                           </div>
                         </div>
@@ -308,7 +308,7 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                         {p.categories?.map((cat: string) => (
                           <span
                             key={cat}
-                            className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] border border-slate-700"
+                            className="px-2 py-0.5 rounded bg-surface-raised text-ink-soft text-[10px] border border-surface-line"
                           >
                             {cat}
                           </span>
@@ -316,11 +316,11 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 font-bold text-emerald-400 font-mono">
+                    <td className="py-3 px-4 font-bold text-violet-400 font-mono">
                       {p.price.toFixed(2)} Bs
                     </td>
 
-                    <td className="py-3 px-4 font-mono text-slate-300">
+                    <td className="py-3 px-4 font-mono text-ink-soft">
                       {p.stock ?? '999'} un.
                     </td>
 
@@ -330,8 +330,8 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                         onClick={() => handleToggleAvailability(p)}
                         className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${
                           p.isAvailable
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
-                            : 'bg-rose-500/20 text-rose-300 border-rose-500/30 hover:bg-rose-500/30'
+                            ? 'bg-violet-500/20 text-violet-300 border-violet-500/30 hover:bg-violet-500/30'
+                            : 'bg-ember/20 text-ember-soft border-ember/30 hover:bg-ember/30'
                         }`}
                       >
                         {p.isAvailable ? '🟢 Activo' : '🔴 Agotado'}
@@ -343,7 +343,7 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                         <button
                           type="button"
                           onClick={() => openEditModal(p)}
-                          className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
+                          className="p-1.5 rounded-lg bg-void-700 border border-surface-line text-ink-mute hover:text-white hover:border-surface-line transition-colors"
                           title="Editar producto"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -351,7 +351,7 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                         <button
                           type="button"
                           onClick={() => handleDelete(p.id)}
-                          className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-800/40 hover:bg-rose-950/20 transition-colors"
+                          className="p-1.5 rounded-lg bg-void-700 border border-surface-line text-ink-mute hover:text-ember hover:border-ember-deep/40 hover:bg-violet-950/20 transition-colors"
                           title="Eliminar producto"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -369,31 +369,31 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
       {/* Modal for Create/Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-lg glass-panel rounded-3xl p-6 shadow-2xl border border-slate-700 animate-in zoom-in-95">
+          <div className="relative w-full max-w-lg rune-panel rounded-3xl p-6 shadow-2xl border border-surface-line animate-in zoom-in-95">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <Sparkles className="w-4 h-4 text-violet-400" />
                 <span>{editingProduct ? 'Editar Producto' : 'Nuevo Producto en el Menú'}</span>
               </h2>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-lg text-ink-mute hover:text-white hover:bg-surface-raised"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {errorMsg && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="mb-4 p-3 rounded-xl bg-ember/10 border border-ember/20 text-ember-soft text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-ember shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             <form onSubmit={handleSaveProduct} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-ink-soft mb-1">
                   Nombre del Plato / Producto
                 </label>
                 <input
@@ -402,13 +402,13 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ej. Hamburguesa Triple Cheddar"
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 text-xs text-white placeholder-slate-500 outline-none"
+                  className="w-full p-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 text-xs text-white placeholder-ink-faint outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-ink-soft mb-1">
                     Precio (Bs)
                   </label>
                   <input
@@ -419,12 +419,12 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="35.00"
-                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 text-xs text-white placeholder-slate-500 outline-none"
+                    className="w-full p-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 text-xs text-white placeholder-ink-faint outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-ink-soft mb-1">
                     Stock Diario
                   </label>
                   <input
@@ -433,13 +433,13 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
                     placeholder="50"
-                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 text-xs text-white placeholder-slate-500 outline-none"
+                    className="w-full p-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 text-xs text-white placeholder-ink-faint outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-ink-soft mb-1">
                   Categorías (separadas por coma)
                 </label>
                 <input
@@ -448,13 +448,13 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                   value={categoriesInput}
                   onChange={(e) => setCategoriesInput(e.target.value)}
                   placeholder="Hamburguesas, Especialidades, Combos"
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 text-xs text-white placeholder-slate-500 outline-none"
+                  className="w-full p-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 text-xs text-white placeholder-ink-faint outline-none"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-slate-300">
+                  <label className="text-xs font-semibold text-ink-soft">
                     Fotografía del Producto
                   </label>
                   <div className="flex gap-1">
@@ -463,8 +463,8 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                       onClick={() => setImageTab('upload')}
                       className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all ${
                         imageTab === 'upload'
-                          ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40'
-                          : 'text-slate-500 hover:text-slate-300'
+                          ? 'bg-violet-600/20 text-violet-400 border border-violet-500/40'
+                          : 'text-ink-faint hover:text-ink-soft'
                       }`}
                     >
                       <Upload className="w-3 h-3 inline mr-1" />
@@ -475,8 +475,8 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                       onClick={() => setImageTab('url')}
                       className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all ${
                         imageTab === 'url'
-                          ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40'
-                          : 'text-slate-500 hover:text-slate-300'
+                          ? 'bg-violet-600/20 text-violet-400 border border-violet-500/40'
+                          : 'text-ink-faint hover:text-ink-soft'
                       }`}
                     >
                       <Link className="w-3 h-3 inline mr-1" />
@@ -489,7 +489,7 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                   <div className="space-y-2">
                     {/* Preview */}
                     {imageUrl && (
-                      <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-700 group">
+                      <div className="relative w-full h-32 rounded-xl overflow-hidden border border-surface-line group">
                         <img
                           src={imageUrl}
                           alt="Preview"
@@ -513,21 +513,21 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                       onClick={() => fileInputRef.current?.click()}
                       className={`relative w-full rounded-xl border-2 border-dashed cursor-pointer transition-all flex flex-col items-center justify-center gap-2 py-5 ${
                         isDragging
-                          ? 'border-emerald-500 bg-emerald-500/10'
-                          : 'border-slate-700 hover:border-emerald-600/50 hover:bg-slate-800/30'
+                          ? 'border-violet-500 bg-violet-500/10'
+                          : 'border-surface-line hover:border-violet-600/50 hover:bg-surface-raised/30'
                       } ${uploadingImage ? 'pointer-events-none opacity-60' : ''}`}
                     >
                       {uploadingImage ? (
                         <>
-                          <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-                          <span className="text-xs text-slate-400">Subiendo imagen...</span>
+                          <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+                          <span className="text-xs text-ink-mute">Subiendo imagen...</span>
                         </>
                       ) : (
                         <>
-                          <ImageIcon className="w-6 h-6 text-slate-500" />
-                          <span className="text-xs text-slate-400 text-center">
+                          <ImageIcon className="w-6 h-6 text-ink-faint" />
+                          <span className="text-xs text-ink-mute text-center">
                             {imageUrl ? 'Cambiar imagen' : 'Arrastra una foto aquí'}<br />
-                            <span className="text-slate-600">o haz clic para seleccionar · JPG, PNG, WEBP · máx 5MB</span>
+                            <span className="text-ink-faint">o haz clic para seleccionar · JPG, PNG, WEBP · máx 5MB</span>
                           </span>
                         </>
                       )}
@@ -546,13 +546,13 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 text-xs text-white placeholder-slate-500 outline-none"
+                    className="w-full p-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 text-xs text-white placeholder-ink-faint outline-none"
                   />
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-ink-soft mb-1">
                   Descripción / Ingredientes
                 </label>
                 <textarea
@@ -561,7 +561,7 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Detalles de la preparación, salsas, acompañamientos..."
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 text-xs text-white placeholder-slate-500 outline-none resize-none"
+                  className="w-full p-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 text-xs text-white placeholder-ink-faint outline-none resize-none"
                 />
               </div>
 
@@ -571,18 +571,18 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                   id="isAvailable"
                   checked={isAvailable}
                   onChange={(e) => setIsAvailable(e.target.checked)}
-                  className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700"
+                  className="w-4 h-4 rounded text-violet-500 focus:ring-violet-500 bg-void-700 border-surface-line"
                 />
-                <label htmlFor="isAvailable" className="text-xs text-slate-300">
+                <label htmlFor="isAvailable" className="text-xs text-ink-soft">
                   Producto disponible para ordenar inmediatamente
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-surface-line">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-800"
+                  className="px-4 py-2 rounded-xl bg-void-700 border border-surface-line text-ink-soft text-xs font-semibold hover:bg-surface-raised"
                 >
                   Cancelar
                 </button>
@@ -590,7 +590,7 @@ export function ProductManager({ businessId, initialProducts }: ProductManagerPr
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shadow-lg shadow-violet-600/20 flex items-center gap-2 disabled:opacity-50"
                 >
                   {loading ? (
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />

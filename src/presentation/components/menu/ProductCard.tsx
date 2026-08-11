@@ -1,101 +1,124 @@
 'use client';
 
 import React from 'react';
-import { Plus, Eye, CheckCircle2, AlertCircle } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Plus, UtensilsCrossed } from 'lucide-react';
+import { Badge } from '@/presentation/components/ui';
+import { bs, cn } from '@/presentation/lib/utils';
+import { EASE_RUNE, tSpring } from '@/presentation/lib/motion';
 
 interface ProductCardProps {
   product: any;
   onSelect: (product: any) => void;
   onQuickAdd?: (product: any) => void;
+  index?: number;
 }
 
-export function ProductCard({ product, onSelect, onQuickAdd }: ProductCardProps) {
+/* `AnimatePresence mode="popLayout"` mide el hijo saliente: necesita reenviar la ref. */
+export const ProductCard = React.forwardRef<HTMLElement, ProductCardProps>(function ProductCard(
+  { product, onSelect, onQuickAdd, index = 0 },
+  ref
+) {
+  const available = Boolean(product.isAvailable);
+
   return (
-    <div
+    <motion.article
+      ref={ref}
+      layout
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: EASE_RUNE, delay: Math.min(index * 0.04, 0.28) }}
+      whileHover={{ y: -6 }}
       onClick={() => onSelect(product)}
-      className="glass-panel rounded-2xl overflow-hidden border border-slate-800/80 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between group cursor-pointer hover:shadow-xl hover:shadow-emerald-950/20"
+      className={cn(
+        'rune-panel rune-edge group flex cursor-pointer flex-col overflow-hidden rounded-3xl',
+        'transition-shadow duration-300 hover:shadow-rune',
+        !available && 'opacity-70'
+      )}
     >
-      <div>
-        {/* Product Image & Tags */}
-        <div className="relative w-full h-44 bg-slate-900 overflow-hidden">
-          {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-700">
-              <Eye className="w-8 h-8 opacity-40" />
-            </div>
-          )}
-
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-
-          {/* Availability Badge */}
-          <div className="absolute top-3 right-3">
-            {product.isAvailable ? (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-md">
-                Disponible
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 backdrop-blur-md">
-                Agotado
-              </span>
+      {/* Imagen */}
+      <div className="relative h-44 overflow-hidden bg-void-700">
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            loading="lazy"
+            className={cn(
+              'h-full w-full object-cover transition-transform duration-700 group-hover:scale-110',
+              !available && 'grayscale'
             )}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-950/50 to-void-700">
+            <UtensilsCrossed className="h-8 w-8 text-violet-500/40" />
           </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-void via-void/25 to-transparent" />
 
-          {/* Category Chips */}
-          <div className="absolute bottom-2.5 left-3 flex flex-wrap gap-1">
-            {product.categories?.slice(0, 2).map((cat: string) => (
+        <div className="absolute right-3 top-3">
+          <Badge tone={available ? 'ok' : 'danger'} dot>
+            {available ? 'Disponible' : 'Agotado'}
+          </Badge>
+        </div>
+
+        {product.categories?.length > 0 && (
+          <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+            {product.categories.slice(0, 2).map((cat: string) => (
               <span
                 key={cat}
-                className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-900/80 text-slate-300 border border-slate-700/60 backdrop-blur-sm"
+                className="rounded-lg border border-surface-line bg-void-800/85 px-2 py-0.5 text-[10px] font-medium text-ink-soft backdrop-blur-sm"
               >
                 {cat}
               </span>
             ))}
           </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-4">
-          <h3 className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
-            {product.name}
-          </h3>
-          <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
-            {product.description}
-          </p>
-        </div>
+        )}
       </div>
 
-      {/* Price & Action Footer */}
-      <div className="p-4 pt-0 flex items-center justify-between">
-        <div>
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Precio</div>
-          <div className="text-base font-black text-emerald-400">
-            {product.price.toFixed(2)} <span className="text-xs font-bold text-emerald-500">Bs</span>
+      {/* Contenido */}
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="line-clamp-1 font-display text-[15px] font-bold text-white transition-colors group-hover:text-arc-soft">
+          {product.name}
+        </h3>
+        <p className="mt-1.5 line-clamp-2 text-[12px] leading-relaxed text-ink-mute">
+          {product.description}
+        </p>
+
+        <div className="mt-4 flex items-end justify-between gap-3 pt-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-faint">
+              Precio
+            </p>
+            <p className="mt-0.5 font-display text-lg font-bold leading-none text-arc tabular">
+              {bs(product.price)}
+              <span className="ml-1 text-[11px] font-semibold text-violet-400">Bs</span>
+            </p>
           </div>
-        </div>
 
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (onQuickAdd && product.isAvailable) {
-              onQuickAdd(product);
-            } else {
-              onSelect(product);
-            }
-          }}
-          disabled={!product.isAvailable}
-          className="p-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-400 transition-all shadow-sm group/btn disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500"
-          title="Agregar al pedido"
-        >
-          <Plus className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-        </button>
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.88 }}
+            whileHover={{ scale: 1.08 }}
+            transition={tSpring}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onQuickAdd && available) onQuickAdd(product);
+              else onSelect(product);
+            }}
+            disabled={!available}
+            aria-label={`Agregar ${product.name} al pedido`}
+            className={cn(
+              'flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl border transition-colors duration-200',
+              available
+                ? 'border-violet-400/35 bg-violet-500/15 text-violet-200 hover:bg-grad-rune hover:text-white'
+                : 'cursor-not-allowed border-surface-line bg-surface text-ink-faint'
+            )}
+          >
+            <Plus className="h-4 w-4" />
+          </motion.button>
+        </div>
       </div>
-    </div>
+    </motion.article>
   );
-}
+});

@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Plus, Minus, ShoppingBag, Sparkles, Check } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { X, Plus, Minus, ShoppingBag, Check, UtensilsCrossed } from 'lucide-react';
+import { Badge, Textarea } from '@/presentation/components/ui';
+import { bs, cn } from '@/presentation/lib/utils';
+import { popIn, tSpring } from '@/presentation/lib/motion';
 
 interface ProductModalProps {
   product: any;
@@ -15,134 +19,185 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
   const [notes, setNotes] = useState('');
   const [added, setAdded] = useState(false);
 
-  if (!isOpen || !product) return null;
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
 
-  const handleAdd = () => {
-    if (onAddToCart) {
-      onAddToCart(product, quantity, notes);
-    }
-    setAdded(true);
-    setTimeout(() => {
-      setAdded(false);
-      onClose();
+  // Reiniciar el estado al abrir otro producto
+  React.useEffect(() => {
+    if (isOpen) {
       setQuantity(1);
       setNotes('');
-    }, 800);
+      setAdded(false);
+    }
+  }, [isOpen, product?.id]);
+
+  const handleAdd = () => {
+    onAddToCart?.(product, quantity, notes);
+    setAdded(true);
+    window.setTimeout(onClose, 750);
   };
 
-  const totalPrice = (product.price * quantity).toFixed(2);
+  const total = (product?.price ?? 0) * quantity;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-lg glass-panel rounded-3xl overflow-hidden shadow-2xl border border-slate-700/80 animate-in zoom-in-95">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2 rounded-full bg-slate-900/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+    <AnimatePresence>
+      {isOpen && product && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+          <motion.div
+            className="absolute inset-0 bg-void/85 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
 
-        {/* Product Image */}
-        {product.imageUrl && (
-          <div className="relative w-full h-56 bg-slate-900 overflow-hidden">
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-            <div className="absolute bottom-3 left-4 flex flex-wrap gap-1.5">
-              {product.categories?.map((cat: string) => (
-                <span
-                  key={cat}
-                  className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-md"
-                >
-                  {cat}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="p-6">
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <h2 className="text-xl font-bold text-white leading-tight">{product.name}</h2>
-            <div className="text-xl font-black text-emerald-400 whitespace-nowrap">
-              {product.price.toFixed(2)} Bs
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-300 leading-relaxed mb-6">
-            {product.description}
-          </p>
-
-          {/* Special Instructions Notes */}
-          <div className="mb-6">
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Instrucciones o preferencias especiales (opcional)
-            </label>
-            <textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej. Sin cebolla, aderezos aparte, salsa picante..."
-              className="w-full p-3 rounded-xl bg-slate-900/90 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-xs text-white placeholder-slate-500 outline-none resize-none transition-all"
-            />
-          </div>
-
-          {/* Quantity and Add to Cart Bar */}
-          <div className="flex items-center gap-4 pt-4 border-t border-slate-800">
-            {/* Quantity Selector */}
-            <div className="flex items-center rounded-xl bg-slate-900 border border-slate-800 p-1">
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <span className="w-8 text-center font-bold text-sm text-white">{quantity}</span>
-              <button
-                type="button"
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Add Button */}
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={product.name}
+            variants={popIn}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="rune-glass relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] sm:rounded-[28px]"
+          >
             <button
-              type="button"
-              onClick={handleAdd}
-              disabled={added || !product.isAvailable}
-              className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold shadow-lg transition-all flex items-center justify-center gap-2 ${
-                added
-                  ? 'bg-emerald-500 text-white shadow-emerald-500/30'
-                  : product.isAvailable
-                  ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-emerald-600/25'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-              }`}
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="absolute right-4 top-4 z-20 cursor-pointer rounded-xl border border-surface-line bg-void-800/85 p-2 text-ink-soft backdrop-blur-md transition-colors hover:border-ember/40 hover:text-ember"
             >
-              {added ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>¡Agregado al Carrito!</span>
-                </>
-              ) : product.isAvailable ? (
-                <>
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Agregar al Pedido • {totalPrice} Bs</span>
-                </>
-              ) : (
-                <span>Agotado / No disponible</span>
-              )}
+              <X className="h-4 w-4" />
             </button>
-          </div>
+
+            <div className="overflow-y-auto">
+              {/* Imagen */}
+              <div className="relative h-56 w-full overflow-hidden bg-void-700">
+                {product.imageUrl ? (
+                  <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-950/50 to-void-700">
+                    <UtensilsCrossed className="h-12 w-12 text-violet-500/30" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-void via-void/30 to-transparent" />
+
+                {product.categories?.length > 0 && (
+                  <div className="absolute bottom-4 left-5 flex flex-wrap gap-1.5">
+                    {product.categories.map((cat: string) => (
+                      <Badge key={cat} tone="violet">
+                        {cat}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="font-display text-xl font-bold leading-tight text-white">
+                    {product.name}
+                  </h2>
+                  <p className="shrink-0 font-display text-xl font-bold text-arc tabular">
+                    {bs(product.price)} <span className="text-sm text-violet-400">Bs</span>
+                  </p>
+                </div>
+
+                <p className="mt-3 text-[13px] leading-relaxed text-ink-mute">
+                  {product.description}
+                </p>
+
+                <div className="mt-6">
+                  <label
+                    htmlFor="product-notes"
+                    className="mb-1.5 block text-[12px] font-semibold text-ink-soft"
+                  >
+                    Instrucciones especiales{' '}
+                    <span className="font-normal text-ink-faint">(opcional)</span>
+                  </label>
+                  <Textarea
+                    id="product-notes"
+                    rows={2}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Ej. sin cebolla, aderezos aparte, salsa picante…"
+                    className="resize-none text-[13px]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex items-center gap-3 border-t border-surface-line bg-void-800/70 p-5">
+              <div className="flex items-center rounded-2xl border border-surface-line bg-void-800 p-1">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                  aria-label="Quitar uno"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-ink-mute transition-colors hover:bg-violet-500/15 hover:text-white disabled:opacity-30"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <motion.span
+                  key={quantity}
+                  initial={{ scale: 0.6, opacity: 0.5 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={tSpring}
+                  className="w-9 text-center font-display text-sm font-bold text-white tabular"
+                >
+                  {quantity}
+                </motion.span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  aria-label="Agregar uno"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-ink-mute transition-colors hover:bg-violet-500/15 hover:text-white"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <motion.button
+                type="button"
+                onClick={handleAdd}
+                disabled={added || !product.isAvailable}
+                whileTap={{ scale: 0.97 }}
+                className={cn(
+                  'sheen flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-3.5',
+                  'font-display text-[13px] font-bold transition-colors duration-300',
+                  added
+                    ? 'border border-ok/40 bg-ok/20 text-ok-soft'
+                    : product.isAvailable
+                      ? 'border border-violet-300/30 bg-grad-rune text-white shadow-glow-violet'
+                      : 'cursor-not-allowed border border-surface-line bg-surface text-ink-faint'
+                )}
+              >
+                {added ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    ¡Agregado!
+                  </>
+                ) : product.isAvailable ? (
+                  <>
+                    <ShoppingBag className="h-4 w-4" />
+                    Agregar · {bs(total)} Bs
+                  </>
+                ) : (
+                  'No disponible'
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

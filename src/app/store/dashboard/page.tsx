@@ -5,13 +5,10 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   Store,
-  Sparkles,
   Package,
-  Layers,
-  Power,
-  ShieldAlert,
   ArrowRight,
   ExternalLink,
   QrCode,
@@ -23,22 +20,24 @@ import { ProductManager } from '@/presentation/components/store/ProductManager';
 import { StoreReceiptsManager } from '@/presentation/components/payments/StoreReceiptsManager';
 import { StoreLiveOrdersManager } from '@/presentation/components/store/StoreLiveOrdersManager';
 import { StoreAnalyticsDashboard } from '@/presentation/components/store/StoreAnalyticsDashboard';
+import { Badge, Button, Panel, Skeleton, Tabs } from '@/presentation/components/ui';
+import { EASE_RUNE } from '@/presentation/lib/motion';
+
+type Tab = 'orders' | 'receipts' | 'products' | 'analytics';
 
 export default function StoreDashboardPage() {
   const { data: session, status } = useSession();
   const [businessData, setBusinessData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'receipts' | 'products' | 'analytics'>('orders');
+  const [activeTab, setActiveTab] = useState<Tab>('orders');
 
   const fetchBusiness = async () => {
     try {
       const res = await fetch('/api/store/me');
       const data = await res.json();
-      
       if (data.business) {
         const menuRes = await fetch(`/api/businesses/${data.business.id}`);
-        const menuData = await menuRes.json();
-        setBusinessData(menuData);
+        setBusinessData(await menuRes.json());
       }
     } catch (err) {
       console.error(err);
@@ -48,16 +47,17 @@ export default function StoreDashboardPage() {
   };
 
   useEffect(() => {
-    if (status !== 'loading') {
-      fetchBusiness();
-    }
+    if (status !== 'loading') fetchBusiness();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session]);
 
   if (status === 'loading' || loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-24 text-center text-slate-400">
-        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-xs">Cargando panel de control comercial...</p>
+      <div className="mx-auto max-w-7xl space-y-7 px-4 py-10 sm:px-6 lg:px-8">
+        <Skeleton className="h-28 rounded-[28px]" />
+        <Skeleton className="h-24 rounded-[28px]" />
+        <Skeleton className="h-14 w-full max-w-2xl rounded-2xl" />
+        <Skeleton className="h-96 rounded-[28px]" />
       </div>
     );
   }
@@ -65,31 +65,35 @@ export default function StoreDashboardPage() {
   const userRole = (session?.user as any)?.role;
   if (!session?.user || (userRole !== 'BUSINESS_OWNER' && userRole !== 'ADMIN')) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <div className="glass-panel rounded-3xl p-8 border border-amber-500/30 shadow-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-4">
-            <Store className="w-7 h-7" />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Portal de Propietarios de Tienda</h2>
-          <p className="text-xs text-slate-400 mb-6">
-            Inicia sesión con tu cuenta de comercio o con el usuario de demostración de Don Pepe para gestionar tu local.
+      <div className="mx-auto max-w-xl px-4 py-20">
+        <Panel className="p-8 text-center">
+          <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-warn/30 bg-warn/12 text-warn">
+            <Store className="h-7 w-7" />
+          </span>
+          <h1 className="font-display text-xl font-bold text-white">Portal de tiendas</h1>
+          <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-ink-mute">
+            Iniciá sesión con tu cuenta de comercio para gestionar tu local.
           </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => signIn('credentials', { email: 'tienda@pedidostrinidad.com', password: 'password123', callbackUrl: '/store/dashboard' })}
-              className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all"
+          <div className="mt-7 space-y-3">
+            <Button
+              full
+              size="md"
+              onClick={() =>
+                signIn('credentials', {
+                  email: 'tienda@pedidostrinidad.com',
+                  password: 'password123',
+                  callbackUrl: '/store/dashboard',
+                })
+              }
             >
-              <span>Acceder con cuenta Demo (Don Pepe)</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <Link
-              href="/auth/login"
-              className="block w-full py-3 px-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-300 text-xs font-semibold"
-            >
-              Iniciar sesión con otra cuenta
-            </Link>
+              Acceder con cuenta demo
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button href="/auth/login" variant="subtle" full size="md">
+              Usar otra cuenta
+            </Button>
           </div>
-        </div>
+        </Panel>
       </div>
     );
   }
@@ -97,19 +101,23 @@ export default function StoreDashboardPage() {
   const { business, products } = businessData || {};
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-2">
-            <Store className="w-3.5 h-3.5 text-amber-400" />
-            <span>Panel de Gestión Comercial</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            {business?.name || 'Mi Negocio'}
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Encabezado */}
+      <motion.header
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: EASE_RUNE }}
+        className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
+      >
+        <div className="min-w-0">
+          <Badge tone="warn" icon={Store}>
+            Panel comercial
+          </Badge>
+          <h1 className="mt-3 truncate font-display text-[28px] font-bold leading-tight tracking-tight text-white sm:text-4xl">
+            {business?.name || 'Mi negocio'}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Revisa pedidos entrantes, valida disponibilidad en cocina, verifica pagos QR y administra tu catálogo en Trinidad.
+          <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-ink-mute">
+            Atendé comandas en vivo, verificá pagos por QR y administrá tu catálogo.
           </p>
         </div>
 
@@ -117,15 +125,14 @@ export default function StoreDashboardPage() {
           <Link
             href={`/businesses/${business.id}`}
             target="_blank"
-            className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 text-xs font-semibold text-slate-200 hover:text-emerald-400 flex items-center gap-2 transition-all shrink-0"
+            className="flex shrink-0 items-center gap-2 rounded-2xl border border-surface-line bg-void-800/70 px-4 py-2.5 text-[12px] font-semibold text-ink-soft transition-colors hover:border-violet-400/50 hover:text-white"
           >
-            <span>Ver Menú Público</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            Ver menú público
+            <ExternalLink className="h-3.5 w-3.5" />
           </Link>
         )}
-      </div>
+      </motion.header>
 
-      {/* Real-time Attendance / Open-Close Toggle */}
       {business && (
         <div className="mb-8">
           <AttendanceToggle
@@ -136,94 +143,42 @@ export default function StoreDashboardPage() {
         </div>
       )}
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-8 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'orders'
-              ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/50'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <ChefHat className="w-4 h-4" />
-          <span>Comandas & Cocina en Vivo</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('receipts')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'receipts'
-              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <QrCode className="w-4 h-4" />
-          <span>Comprobantes QR Bancarios</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'products'
-              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <Package className="w-4 h-4" />
-          <span>Catálogo de Platos ({products?.length || 0})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-            activeTab === 'analytics'
-              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-          }`}
-        >
-          <BarChart2 className="w-4 h-4" />
-          <span>Mis Ganancias</span>
-        </button>
+      <div className="mb-8">
+        <Tabs
+          layoutKey="store-tabs"
+          value={activeTab}
+          onChange={setActiveTab}
+          tabs={[
+            { value: 'orders', label: 'Comandas', icon: ChefHat },
+            { value: 'receipts', label: 'Comprobantes QR', icon: QrCode },
+            { value: 'products', label: 'Catálogo', icon: Package, count: products?.length ?? 0 },
+            { value: 'analytics', label: 'Ganancias', icon: BarChart2 },
+          ]}
+        />
       </div>
 
-      {/* TAB CONTENT 1: COMANDAS & COCINA EN VIVO */}
-      {activeTab === 'orders' && business && (
-        <div className="space-y-6">
-          <StoreLiveOrdersManager
-            businessId={business.id}
-            onOrderUpdated={fetchBusiness}
-          />
-        </div>
-      )}
-
-      {/* TAB CONTENT 2: COMPROBANTES QR */}
-      {activeTab === 'receipts' && business && (
-        <div className="space-y-6">
-          <StoreReceiptsManager
-            businessId={business.id}
-            onReceiptVerified={fetchBusiness}
-          />
-        </div>
-      )}
-
-      {/* TAB CONTENT 3: PRODUCTOS */}
-      {activeTab === 'products' && business && (
-        <div className="space-y-6">
-          <ProductManager
-            businessId={business.id}
-            initialProducts={products || []}
-          />
-        </div>
-      )}
-      {/* TAB CONTENT 4: GANANCIAS & ANALYTICS */}
-      {activeTab === 'analytics' && business && (
-        <div className="space-y-6">
-          <StoreAnalyticsDashboard
-            businessId={business.id}
-            businessName={business.name}
-          />
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3, ease: EASE_RUNE }}
+        >
+          {business && activeTab === 'orders' && (
+            <StoreLiveOrdersManager businessId={business.id} onOrderUpdated={fetchBusiness} />
+          )}
+          {business && activeTab === 'receipts' && (
+            <StoreReceiptsManager businessId={business.id} onReceiptVerified={fetchBusiness} />
+          )}
+          {business && activeTab === 'products' && (
+            <ProductManager businessId={business.id} initialProducts={products || []} />
+          )}
+          {business && activeTab === 'analytics' && (
+            <StoreAnalyticsDashboard businessId={business.id} businessName={business.name} />
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

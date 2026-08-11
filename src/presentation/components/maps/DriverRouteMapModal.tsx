@@ -248,20 +248,20 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
   const cleanPhone = (order?.customerPhone || order?.customer?.phone || '').replace(/\D/g, '');
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="glass-panel max-w-3xl w-full rounded-3xl border-2 border-emerald-500/50 shadow-2xl overflow-hidden bg-slate-950 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-void/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="rune-panel max-w-3xl w-full rounded-3xl border-2 border-violet-500/50 shadow-2xl overflow-hidden bg-void flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-4 bg-slate-900/90">
+        <div className="p-4 sm:p-5 border-b border-surface-line flex items-center justify-between gap-4 bg-void-700/90">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-black shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-500/40 flex items-center justify-center font-black shrink-0">
               <Route className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
                   Ruta GPS en Vivo
                 </span>
-                <span className="text-xs text-slate-400 font-mono">
+                <span className="text-xs text-ink-mute font-mono">
                   #{order?.id?.slice(0, 6)?.toUpperCase()}
                 </span>
               </div>
@@ -274,27 +274,27 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+            className="p-2 rounded-xl bg-surface-raised hover:bg-surface-high text-ink-mute hover:text-white transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Mapa Interactivo Leaflet */}
-        <div className="relative flex-1 min-h-[240px] sm:min-h-[320px] bg-slate-900">
+        <div className="relative flex-1 min-h-[240px] sm:min-h-[320px] bg-void-700">
           <div ref={mapContainerRef} className="w-full h-full min-h-[240px] sm:min-h-[320px]" />
 
           {/* Leyenda flotante */}
-          <div className="absolute top-3 left-3 z-10 bg-slate-950/90 backdrop-blur-md p-2.5 rounded-2xl border border-slate-800 shadow-xl text-[11px] space-y-1.5 pointer-events-none">
-            <div className="flex items-center gap-2 text-sky-300 font-bold">
+          <div className="absolute top-3 left-3 z-10 bg-void/90 backdrop-blur-md p-2.5 rounded-2xl border border-surface-line shadow-xl text-[11px] space-y-1.5 pointer-events-none">
+            <div className="flex items-center gap-2 text-info-soft font-bold">
               <span>🏍️</span>
               <span>Tu Moto (Inicio)</span>
             </div>
-            <div className="flex items-center gap-2 text-amber-300 font-bold">
+            <div className="flex items-center gap-2 text-warn-soft font-bold">
               <span>🏬</span>
               <span>{order?.business?.name} (Retiro)</span>
             </div>
-            <div className="flex items-center gap-2 text-emerald-300 font-bold">
+            <div className="flex items-center gap-2 text-violet-300 font-bold">
               <span>🏠</span>
               <span>{order?.customer?.name} (Entrega)</span>
             </div>
@@ -302,17 +302,17 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
         </div>
 
         {/* Panel de Datos y Acciones Rápidas */}
-        <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-950 space-y-4">
+        <div className="p-4 sm:p-5 border-t border-surface-line bg-void space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             {/* Retiro info */}
-            <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between gap-2">
+            <div className="p-3 rounded-2xl bg-void-700/80 border border-surface-line flex flex-col justify-between gap-2">
               <div>
-                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block mb-1 flex items-center gap-1">
+                <span className="text-[10px] text-warn font-bold uppercase tracking-wider block mb-1 flex items-center gap-1">
                   <Store className="w-3 h-3" />
                   <span>Punto 1: Recoger en Cocina</span>
                 </span>
                 <strong className="text-white text-xs block">{order?.business?.name}</strong>
-                <p className="text-slate-400 text-[11px] mt-0.5">
+                <p className="text-ink-mute text-[11px] mt-0.5">
                   {spaceName} • Trinidad, Beni
                 </p>
               </div>
@@ -320,7 +320,7 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
                 href={navigateToStoreGpsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="self-start px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 transition-all"
+                className="self-start px-2.5 py-1 rounded-lg bg-warn/10 hover:bg-warn/20 text-warn-soft border border-warn/30 text-[10px] font-bold flex items-center gap-1 transition-all"
               >
                 <Navigation className="w-3 h-3" />
                 <span>Navegar a Cocina</span>
@@ -328,18 +328,18 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
             </div>
 
             {/* Entrega info */}
-            <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between gap-2">
+            <div className="p-3 rounded-2xl bg-void-700/80 border border-surface-line flex flex-col justify-between gap-2">
               <div>
-                <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mb-1 flex items-center gap-1">
+                <span className="text-[10px] text-violet-400 font-bold uppercase tracking-wider block mb-1 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   <span>Punto 2: Entregar al Cliente</span>
                 </span>
                 <strong className="text-white text-xs block">{order?.customer?.name}</strong>
-                <p className="text-slate-300 text-[11px] mt-0.5 font-mono">
+                <p className="text-ink-soft text-[11px] mt-0.5 font-mono">
                   {order?.deliveryAddress}
                 </p>
                 {order?.notes && (
-                  <p className="text-amber-300 text-[11px] mt-1 italic">
+                  <p className="text-warn-soft text-[11px] mt-1 italic">
                     Notas: &quot;{order.notes}&quot;
                   </p>
                 )}
@@ -348,7 +348,7 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
                 href={navigateToCustomerGpsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="self-start px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 transition-all"
+                className="self-start px-2.5 py-1 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-500/30 text-[10px] font-bold flex items-center gap-1 transition-all"
               >
                 <Navigation className="w-3 h-3" />
                 <span>Navegar al Cliente</span>
@@ -361,10 +361,10 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
             href={navigateToCustomerGpsUrl}
             target="_blank"
             rel="noreferrer"
-            className="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 text-sm font-black shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2.5 transition-all ring-2 ring-emerald-400/50 transform active:scale-98"
+            className="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-violet-500 via-arc to-violet-400 hover:from-violet-400 hover:to-arc-soft text-white text-sm font-black shadow-xl shadow-violet-500/30 flex items-center justify-center gap-2.5 transition-all ring-2 ring-violet-400/50 transform active:scale-98"
           >
-            <Navigation className="w-5 h-5 animate-pulse text-slate-950" />
-            <span className="text-slate-950 tracking-wide uppercase font-black">
+            <Navigation className="w-5 h-5 animate-pulse text-void" />
+            <span className="text-void tracking-wide uppercase font-black">
               🧭 Iniciar Ruta en Google Maps (GPS Hablado)
             </span>
           </a>
@@ -375,10 +375,10 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
               href={completeRouteGpsUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex-1 min-w-[140px] py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+              className="flex-1 min-w-[140px] py-2.5 px-3 rounded-xl bg-void-700 hover:bg-surface-raised border border-surface-line text-ink-soft text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
               title="Ruta con 2 paradas: Moto -> Local -> Cliente"
             >
-              <Route className="w-3.5 h-3.5 text-slate-400" />
+              <Route className="w-3.5 h-3.5 text-ink-mute" />
               <span>Ruta con 2 Paradas</span>
             </a>
 
@@ -386,9 +386,9 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
               href={wazeCustomerUrl}
               target="_blank"
               rel="noreferrer"
-              className="py-2.5 px-3 rounded-xl bg-sky-950/60 hover:bg-sky-900/60 border border-sky-500/40 text-sky-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+              className="py-2.5 px-3 rounded-xl bg-violet-950/60 hover:bg-violet-900/60 border border-info/40 text-info-soft text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
             >
-              <Compass className="w-3.5 h-3.5 text-sky-400" />
+              <Compass className="w-3.5 h-3.5 text-info" />
               <span>Waze</span>
             </a>
 
@@ -397,9 +397,9 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
                 href={whatsAppUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="py-2.5 px-3.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md"
+                className="py-2.5 px-3.5 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/40 text-violet-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                <MessageSquare className="w-3.5 h-3.5 text-violet-400" />
                 <span>WhatsApp</span>
               </a>
             )}
@@ -407,9 +407,9 @@ export function DriverRouteMapModal({ order, onClose }: DriverRouteMapModalProps
             {cleanPhone && (
               <a
                 href={`tel:${cleanPhone}`}
-                className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                className="py-2.5 px-3 rounded-xl bg-void-700 hover:bg-surface-raised border border-surface-line text-ink text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
               >
-                <Phone className="w-3.5 h-3.5 text-slate-400" />
+                <Phone className="w-3.5 h-3.5 text-ink-mute" />
                 <span>Llamar</span>
               </a>
             )}

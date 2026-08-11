@@ -195,21 +195,21 @@ export default function Sprint6ValidationPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 mb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-rose-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-ember/20 text-ember-soft border border-ember/30 mb-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-ember" />
             <span>Suite de Pruebas Automatizadas</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Validación Sprint 6: Panel de Administración Global & Reportes
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-ink-mute mt-1">
             Verificación de cálculo de métricas financieras (GMV), alta de espacios gastronómicos, administración de usuarios y auditoría global.
           </p>
         </div>
 
         <Link
           href="/admin/dashboard"
-          className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-rose-600/20 shrink-0"
+          className="px-4 py-2.5 rounded-xl bg-ember-deep hover:bg-ember text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-ember-deep/20 shrink-0"
         >
           <ShieldCheck className="w-4 h-4" />
           <span>Ir a Panel de Administración</span>
@@ -220,23 +220,23 @@ export default function Sprint6ValidationPage() {
       {/* Grid de Pruebas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {/* Test 1 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-emerald-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-violet-500/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-violet-500/20 text-violet-400 flex items-center justify-center">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/20">
               Finanzas & GMV
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">1. Métricas Globales de Plataforma</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Calcula el GMV transaccionado, ticket promedio, recaudación de delivery y desglose por pasarelas (QR, Tarjeta, Efectivo).
           </p>
           <button
             onClick={runMetricsTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold shadow-md shadow-violet-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test Métricas</span>
@@ -244,23 +244,23 @@ export default function Sprint6ValidationPage() {
         </div>
 
         {/* Test 2 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-rose-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-ember/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-ember/20 text-ember flex items-center justify-center">
               <Layers className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ember/10 text-ember-soft border border-ember/20">
               Catálogo Global
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">2. Alta de Espacios y Comercios</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Valida la creación y vinculación jerárquica de nuevos patios gastronómicos y restaurantes en la ciudad de Trinidad.
           </p>
           <button
             onClick={runCatalogAdminTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-ember-deep hover:bg-ember text-white text-xs font-bold shadow-md shadow-ember-deep/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test Catálogo</span>
@@ -268,23 +268,23 @@ export default function Sprint6ValidationPage() {
         </div>
 
         {/* Test 3 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-purple-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-arc/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-arc/20 text-arc flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-arc/10 text-arc-soft border border-arc/20">
               Gestión de Usuarios
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">3. Administración de Roles y Repartidores</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Permite reasignar roles de usuarios (ADMIN, BUSINESS_OWNER, DRIVER, CUSTOMER) y emitir credenciales de repartidor.
           </p>
           <button
             onClick={runUserAdminTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-arc-deep hover:bg-arc text-white text-xs font-bold shadow-md shadow-arc-deep/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test Usuarios</span>
@@ -292,23 +292,23 @@ export default function Sprint6ValidationPage() {
         </div>
 
         {/* Test 4 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-amber-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-warn/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-warn/20 text-warn flex items-center justify-center">
               <Store className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-warn/10 text-warn-soft border border-warn/20">
               Auditoría Global
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">4. Libro de Órdenes & Auditoría</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Inspecciona el libro de transacciones completo con filtros por estado, comercio, cliente y método de pago.
           </p>
           <button
             onClick={runOrderAuditTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-warn hover:bg-warn text-void text-xs font-bold shadow-md shadow-warn/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test Auditoría</span>
@@ -317,23 +317,23 @@ export default function Sprint6ValidationPage() {
       </div>
 
       {/* Terminal de Logs en Vivo */}
-      <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-4">
+      <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+          <h3 className="text-xs font-bold text-ink-soft uppercase tracking-wider flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-ember" />
             <span>Consola de Auditoría en Tiempo Real</span>
           </h3>
           <button
             onClick={clearLogs}
-            className="text-[11px] text-slate-400 hover:text-white transition-colors"
+            className="text-[11px] text-ink-mute hover:text-white transition-colors"
           >
             Limpiar logs
           </button>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-900 font-mono text-xs text-rose-300 space-y-1.5 min-h-[160px] max-h-[300px] overflow-y-auto">
+        <div className="p-4 rounded-2xl bg-void border border-surface-lineSoft font-mono text-xs text-ember-soft space-y-1.5 min-h-[160px] max-h-[300px] overflow-y-auto">
           {logs.length === 0 ? (
-            <span className="text-slate-600 italic">
+            <span className="text-ink-faint italic">
               Haz clic en cualquiera de las pruebas para verificar las capacidades del panel administrativo...
             </span>
           ) : (

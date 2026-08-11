@@ -40,3 +40,9 @@ Thumbs.db
 
 # Scratch / temp files
 scratch/
+
+# Skills instaladas por CLI (UI/UX Pro Max, Motion) — se regeneran con npx
+.claude/skills/
+
+# Config local de Claude (contiene la clave de 21st.dev)
+.claude/settings.local.json

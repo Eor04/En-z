@@ -1,15 +1,20 @@
 {
-  "name": "Pedidos Trinidad - Delivery & Gastronomía",
-  "short_name": "PedidosTrinidad",
-  "description": "Plataforma de delivery modular para patios de comida, restaurantes, licorerías y farmacias en Trinidad, Beni.",
+  "name": "En Z — Delivery en Trinidad",
+  "short_name": "En Z",
+  "description": "Patios de comida, licorerías y farmacias de Trinidad en un solo lugar. Pedí por QR, tarjeta o efectivo y seguí tu pedido en vivo.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "id": "/?source=pwa",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#090d16",
-  "theme_color": "#090d16",
-  "categories": ["food", "shopping", "business", "productivity"],
+  "background_color": "#06040D",
+  "theme_color": "#06040D",
+  "categories": [
+    "food",
+    "shopping",
+    "business",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/icons/icon-192x192.svg",
@@ -32,25 +37,40 @@
   ],
   "shortcuts": [
     {
-      "name": "Panel de Repartidor",
+      "name": "Panel de repartidor",
       "short_name": "Repartidores",
       "description": "Acceso al radar y entregas activas",
       "url": "/driver/dashboard?source=pwa_shortcut",
-      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.svg",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "name": "Cocina & Comandas",
+      "name": "Comandas de mi tienda",
       "short_name": "Mi Tienda",
       "description": "Gestión de pedidos en cocina en tiempo real",
       "url": "/store/dashboard?source=pwa_shortcut",
-      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.svg",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "name": "Patios & Restaurantes",
+      "name": "Explorar espacios",
       "short_name": "Explorar",
       "description": "Pedir comida y productos en Trinidad",
       "url": "/spaces?source=pwa_shortcut",
-      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.svg",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

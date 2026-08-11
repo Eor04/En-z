@@ -3,113 +3,123 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Snowflake, Phone, ArrowLeft, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { motion } from 'motion/react';
+import { Snowflake, Phone, ArrowLeft, MessageCircle, Clock } from 'lucide-react';
+import { EnZLogo } from '@/presentation/components/brand/EnZLogo';
+import { Panel, Skeleton } from '@/presentation/components/ui';
+import { EASE_RUNE } from '@/presentation/lib/motion';
 
-// Componente interno que usa useSearchParams (requiere Suspense en Next.js 14)
 function FrozenContent() {
   const searchParams = useSearchParams();
   const reason = searchParams.get('reason') || '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-      {/* Fondo animado */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
+    <div className="relative flex min-h-[calc(100dvh-68px)] items-center justify-center px-4 py-14">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]"
+        style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)' }}
+      />
 
-      <div className="relative w-full max-w-md">
-        {/* Card principal */}
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-blue-500/20 rounded-3xl p-8 shadow-2xl shadow-blue-500/10 text-center">
-          {/* Icono */}
-          <div className="flex justify-center mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: EASE_RUNE }}
+        className="relative w-full max-w-md"
+      >
+        <Panel className="p-8 text-center">
+          {/* Emblema congelado */}
+          <div className="mb-7 flex justify-center">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
-                <Snowflake className="w-12 h-12 text-blue-400 animate-spin" style={{ animationDuration: '8s' }} />
+              <div className="absolute inset-0 rounded-full bg-info/20 blur-2xl" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-info/30 bg-info/10">
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
+                  className="text-info"
+                >
+                  <Snowflake className="h-11 w-11" />
+                </motion.span>
               </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-black">!</span>
-              </div>
+              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-void bg-ember font-display text-[12px] font-bold text-white">
+                !
+              </span>
             </div>
           </div>
 
-          {/* Título */}
-          <h1 className="text-2xl font-black text-white mb-2 tracking-tight">
-            Cuenta Congelada
+          <h1 className="font-display text-2xl font-bold tracking-tight text-white">
+            Cuenta congelada
           </h1>
-          <p className="text-blue-300/80 text-sm font-medium mb-6">
-            Tu acceso a Pedidos Trinidad ha sido suspendido temporalmente.
+          <p className="mt-2 text-[13px] text-info-soft">
+            Tu acceso a En Z está suspendido temporalmente.
           </p>
 
-          {/* Motivo */}
           {reason && (
-            <div className="mb-6 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-left">
-              <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-1">Motivo:</p>
-              <p className="text-sm text-slate-300">{decodeURIComponent(reason)}</p>
+            <div className="mt-6 rounded-2xl border border-info/30 bg-info/10 p-4 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-info">Motivo</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+                {decodeURIComponent(reason)}
+              </p>
             </div>
           )}
 
-          {/* Separador */}
-          <div className="w-full h-px bg-slate-800 mb-6" />
+          <div className="my-7 h-px bg-surface-line" />
 
-          {/* CTA contactar soporte */}
-          <p className="text-slate-400 text-xs mb-4">
-            Para resolver esta situación, contacta a nuestro equipo de soporte:
+          <p className="mb-4 text-[12px] text-ink-mute">
+            Escribinos y lo resolvemos:
           </p>
 
           <div className="space-y-3">
             <a
-              href="https://wa.me/59177848278?text=Hola,%20mi%20cuenta%20en%20Pedidos%20Trinidad%20fue%20congelada%20y%20necesito%20ayuda."
+              href="https://wa.me/59177848278?text=Hola,%20mi%20cuenta%20en%20En%20Z%20fue%20congelada%20y%20necesito%20ayuda."
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold text-sm shadow-lg shadow-green-600/20 transition-all hover:shadow-green-500/30 hover:-translate-y-0.5"
+              className="sheen flex w-full items-center justify-center gap-3 rounded-2xl border border-ok/35 bg-ok/15 px-6 py-3.5 font-display text-[13px] font-bold text-ok-soft transition-all hover:-translate-y-0.5 hover:bg-ok/25"
             >
-              <MessageCircle className="w-5 h-5" />
-              <span>WhatsApp Soporte</span>
+              <MessageCircle className="h-5 w-5" />
+              WhatsApp soporte
             </a>
 
             <a
               href="tel:+59177848278"
-              className="w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm transition-all"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl border border-surface-line bg-void-800/70 px-6 py-3.5 font-display text-[13px] font-bold text-white transition-colors hover:border-violet-400/40"
             >
-              <Phone className="w-5 h-5 text-blue-400" />
-              <span>77848278</span>
+              <Phone className="h-5 w-5 text-violet-300" />
+              <span className="tabular">77848278</span>
             </a>
           </div>
 
-          {/* Horario */}
-          <p className="text-slate-600 text-[11px] mt-4">
-            Atención: Lun – Sáb · 8:00 am – 8:00 pm
+          <p className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-ink-faint">
+            <Clock className="h-3.5 w-3.5" />
+            Lun a sáb · 8:00 – 20:00
           </p>
 
-          {/* Volver al inicio */}
           <Link
             href="/auth/login"
-            className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            className="group mt-7 flex items-center justify-center gap-2 text-[12px] text-ink-mute transition-colors hover:text-violet-300"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
             Volver al inicio de sesión
           </Link>
-        </div>
+        </Panel>
 
-        {/* Logo pie */}
-        <p className="text-center text-slate-600 text-[11px] mt-4">
-          Pedidos Trinidad © {new Date().getFullYear()}
-        </p>
-      </div>
+        <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-ink-faint">
+          <EnZLogo size={18} glow={false} />
+          En Z © {new Date().getFullYear()}
+        </div>
+      </motion.div>
     </div>
   );
 }
 
-// Página exportada con Suspense boundary (requerido por Next.js 14 para useSearchParams)
 export default function FrozenAccountPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+        <div className="flex min-h-[60dvh] items-center justify-center px-4">
+          <Skeleton className="h-[520px] w-full max-w-md rounded-[28px]" />
         </div>
       }
     >

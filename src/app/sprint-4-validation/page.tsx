@@ -319,21 +319,21 @@ export default function Sprint4ValidationPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30 mb-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
             <span>Suite de Pruebas Automatizadas</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Validación Sprint 4: Pasarela de Pagos & Comprobantes QR
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-ink-mute mt-1">
             Verificación aislada de casos de uso de pagos, transferencias bancarias, pasarela online y webhooks.
           </p>
         </div>
 
         <Link
           href="/store/dashboard"
-          className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500 text-xs font-semibold text-slate-200 hover:text-amber-400 flex items-center gap-2 transition-all shrink-0"
+          className="px-4 py-2.5 rounded-xl bg-void-700 border border-surface-line hover:border-warn text-xs font-semibold text-ink hover:text-warn flex items-center gap-2 transition-all shrink-0"
         >
           <span>Ir a Panel de Comprobantes</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -343,23 +343,23 @@ export default function Sprint4ValidationPage() {
       {/* Grid de Pruebas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {/* Test 1 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-amber-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-warn/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-warn/20 text-warn flex items-center justify-center">
               <QrCode className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-warn/10 text-warn-soft border border-warn/20">
               Caso Principal
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">1. Flujo QR Simple & Aprobación</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Crea una orden con QR, sube un comprobante de transferencia y lo aprueba desde la perspectiva de la tienda, avanzando a preparación.
           </p>
           <button
             onClick={runQRApprovalTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-warn hover:bg-warn text-void text-xs font-bold shadow-md shadow-warn/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test QR Aprobado</span>
@@ -367,23 +367,23 @@ export default function Sprint4ValidationPage() {
         </div>
 
         {/* Test 2 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-rose-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-ember/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-ember/20 text-ember flex items-center justify-center">
               <XCircle className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ember/10 text-ember-soft border border-ember/20">
               Seguridad Comercial
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">2. Rechazo de Comprobante Inválido</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Valida que un comprobante rechazado por monto o datos erróneos no active la cocina y registre el motivo en la orden.
           </p>
           <button
             onClick={runQRRejectionTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-ember-deep hover:bg-ember text-white text-xs font-bold shadow-md shadow-ember-deep/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test Comprobante Rechazado</span>
@@ -391,23 +391,23 @@ export default function Sprint4ValidationPage() {
         </div>
 
         {/* Test 3 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-blue-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-info/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-info/20 text-info flex items-center justify-center">
               <CreditCard className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-info/10 text-info-soft border border-info/20">
               Pasarela Online
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">3. Pago Directo con Tarjeta</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Simula la interacción con la pasarela bancaria con autorización en tiempo real y confirmación instantánea.
           </p>
           <button
             onClick={runGatewayCardTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-info-deep hover:bg-info text-white text-xs font-bold shadow-md shadow-info-deep/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test Pasarela Tarjeta</span>
@@ -415,23 +415,23 @@ export default function Sprint4ValidationPage() {
         </div>
 
         {/* Test 4 */}
-        <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-3 hover:border-emerald-500/40 transition-all">
+        <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-3 hover:border-violet-500/40 transition-all">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-violet-500/20 text-violet-400 flex items-center justify-center">
               <Send className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/20">
               Webhook Asíncrono
             </span>
           </div>
           <h3 className="font-bold text-white text-sm">4. Webhook de Pasarela Bancaria</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-mute leading-relaxed">
             Prueba la recepción del webhook HTTP POST de la entidad bancaria que confirma el pago en segundo plano.
           </p>
           <button
             onClick={runWebhookTest}
             disabled={running}
-            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shadow-md shadow-violet-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Ejecutar Test Webhook</span>
@@ -440,23 +440,23 @@ export default function Sprint4ValidationPage() {
       </div>
 
       {/* Terminal de Logs en Vivo */}
-      <div className="p-6 rounded-3xl glass-panel border border-slate-800 space-y-4">
+      <div className="p-6 rounded-3xl rune-panel border border-surface-line space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <h3 className="text-xs font-bold text-ink-soft uppercase tracking-wider flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-warn" />
             <span>Consola de Ejecución en Tiempo Real</span>
           </h3>
           <button
             onClick={clearLogs}
-            className="text-[11px] text-slate-400 hover:text-white transition-colors"
+            className="text-[11px] text-ink-mute hover:text-white transition-colors"
           >
             Limpiar logs
           </button>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-900 font-mono text-xs text-emerald-400 space-y-1.5 min-h-[160px] max-h-[300px] overflow-y-auto">
+        <div className="p-4 rounded-2xl bg-void border border-surface-lineSoft font-mono text-xs text-violet-400 space-y-1.5 min-h-[160px] max-h-[300px] overflow-y-auto">
           {logs.length === 0 ? (
-            <span className="text-slate-600 italic">
+            <span className="text-ink-faint italic">
               Haz clic en cualquiera de las pruebas para ver la traza de ejecución de dominio...
             </span>
           ) : (
@@ -466,11 +466,11 @@ export default function Sprint4ValidationPage() {
 
         {testOrder && (
           <div className="pt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Última orden de prueba: <strong className="text-white">{testOrder.id}</strong></span>
+            <span className="text-ink-mute">Última orden de prueba: <strong className="text-white">{testOrder.id}</strong></span>
             <Link
               href={`/orders/${testOrder.id}`}
               target="_blank"
-              className="text-amber-400 hover:underline flex items-center gap-1 font-bold"
+              className="text-warn hover:underline flex items-center gap-1 font-bold"
             >
               <span>Abrir vista de seguimiento del cliente</span>
               <ArrowRight className="w-3.5 h-3.5" />

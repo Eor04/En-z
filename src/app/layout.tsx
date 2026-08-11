@@ -1,21 +1,55 @@
 import './globals.css';
 import 'leaflet/dist/leaflet.css';
+import { Chakra_Petch, Manrope, JetBrains_Mono } from 'next/font/google';
 import { SessionProvider } from '@/presentation/components/providers/SessionProvider';
 import { CartProvider } from '@/presentation/context/CartContext';
 import { CartDrawer } from '@/presentation/components/cart/CartDrawer';
 import { Navbar } from '@/presentation/components/layout/Navbar';
+import { Footer } from '@/presentation/components/layout/Footer';
 import { PwaInstallBanner } from '@/presentation/components/common/PwaInstallBanner';
+import { EnZSplash } from '@/presentation/components/brand/EnZSplash';
+import { AuroraBackground } from '@/presentation/components/ui';
 import type { Metadata, Viewport } from 'next';
 
+/* --- Tipografía ---------------------------------------------------------
+ * Display: Chakra Petch — angular, técnica; hereda la geometría del nudo.
+ * Cuerpo:  Manrope — geométrica humanista, altísima legibilidad.
+ * Datos:   JetBrains Mono — cifras tabulares para precios y códigos.
+ * (Evitamos Inter/Roboto a propósito, como pide la guía.)
+ * --------------------------------------------------------------------- */
+const display = Chakra_Petch({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const sans = Manrope({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-mono',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'PedidosTrinidad - Delivery Modular Gastronómico & Comercial',
+  title: {
+    default: 'En Z — Delivery de comida y comercios en Trinidad',
+    template: '%s · En Z',
+  },
   description:
-    'Plataforma de delivery modular para patios de comida, licorerías y farmacias en Trinidad. Pide por QR, tarjeta o efectivo.',
+    'En Z conecta patios de comida, licorerías y farmacias de Trinidad con tu puerta. Pide por QR, tarjeta o efectivo y sigue tu pedido en vivo.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PedidosTrinidad',
+    title: 'En Z',
   },
   icons: {
     icon: '/icons/icon-192x192.svg',
@@ -24,39 +58,39 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#090d16',
+  themeColor: '#06040D',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className="dark">
-      <body className="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+    <html
+      lang="es"
+      className={`dark ${display.variable} ${sans.variable} ${mono.variable}`}
+    >
+      <body className="flex min-h-dvh flex-col bg-void text-ink antialiased">
         <SessionProvider>
           <CartProvider>
+            <AuroraBackground />
+            <EnZSplash />
+
+            {/* a11y: salto directo al contenido (regla skip-links) */}
+            <a
+              href="#contenido"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[130] focus:rounded-xl focus:bg-violet-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+            >
+              Saltar al contenido
+            </a>
+
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main id="contenido" className="relative flex-1">
+              {children}
+            </main>
             <CartDrawer />
             <PwaInstallBanner />
-            <footer className="border-t border-slate-900 bg-slate-950/80 py-8 text-center text-xs text-slate-500">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white">
-                    Pedidos<span className="text-emerald-400">Trinidad</span>
-                  </span>
-                  <span>• Delivery Express de Comida & Comercios en Trinidad, Beni</span>
-                </div>
-                <div className="text-slate-400">
-                  © 2026 PedidosTrinidad. Todos los derechos reservados.
-                </div>
-              </div>
-            </footer>
+            <Footer />
           </CartProvider>
         </SessionProvider>
       </body>

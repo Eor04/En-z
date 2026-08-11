@@ -1,42 +1,56 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import { UnifiedLoginForm } from '@/presentation/components/auth/UnifiedLoginForm';
 import Link from 'next/link';
-import { ShoppingBag, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { UnifiedLoginForm } from '@/presentation/components/auth/UnifiedLoginForm';
+import { EnZLogo } from '@/presentation/components/brand/EnZLogo';
+import { Skeleton } from '@/presentation/components/ui';
 
 export const metadata = {
-  title: 'Iniciar Sesión | PedidosTrinidad Delivery',
-  description: 'Portal de acceso unificado para Clientes, Tiendas, Repartidores y Administradores de PedidosTrinidad.',
+  title: 'Iniciar sesión',
+  description:
+    'Portal unificado de En Z para clientes, tiendas, repartidores y administración.',
 };
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Decorative Gradient Blobs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative flex min-h-[calc(100dvh-68px)] flex-col justify-center overflow-hidden py-14 sm:px-6 lg:px-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/3 h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]"
+        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.22), transparent 70%)' }}
+      />
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6 relative z-10">
+      <header className="relative mb-8 text-center">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-emerald-400 mb-6 transition-colors"
+          className="group mb-8 inline-flex items-center gap-2 text-[12px] font-semibold text-ink-mute transition-colors hover:text-violet-300"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Volver a la página principal</span>
+          <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+          Volver al inicio
         </Link>
 
-        <div className="flex items-center justify-center gap-2.5 mb-2">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <ShoppingBag className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-2xl font-black tracking-tight text-white">Pedidos<span className="text-emerald-400">Trinidad</span></span>
+        <div className="flex flex-col items-center gap-3">
+          <EnZLogo size={64} className="animate-float" />
+          <span className="font-display text-3xl font-bold tracking-[0.3em] text-white">
+            EN<span className="text-arc"> Z</span>
+          </span>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-300/60">
+            Acceso por roles
+          </p>
         </div>
-        <p className="text-xs text-slate-400">Acceso Seguro y Modular por Roles</p>
-      </div>
+      </header>
 
-      <div className="relative z-10 px-4 sm:px-0">
-        <Suspense fallback={<div className="text-center text-slate-400 py-12">Cargando portal...</div>}>
+      <div className="relative px-4 sm:px-0">
+        <Suspense
+          fallback={
+            <div className="mx-auto w-full max-w-xl space-y-6">
+              <Skeleton className="h-[74px] rounded-2xl" />
+              <Skeleton className="h-[420px] rounded-[28px]" />
+            </div>
+          }
+        >
           <UnifiedLoginForm />
         </Suspense>
       </div>

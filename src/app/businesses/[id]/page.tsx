@@ -2,56 +2,65 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   Store,
   ArrowLeft,
   Search,
   Phone,
   QrCode,
-  MapPin,
   ShoppingBag,
-  Sparkles,
   CheckCircle2,
-  Clock,
+  UtensilsCrossed,
+  X,
 } from 'lucide-react';
 import { ProductCard } from '@/presentation/components/menu/ProductCard';
 import { ProductModal } from '@/presentation/components/menu/ProductModal';
 import { useCart } from '@/presentation/context/CartContext';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Input,
+  Skeleton,
+  Panel,
+} from '@/presentation/components/ui';
+import { cn } from '@/presentation/lib/utils';
+import { EASE_RUNE, tSpring } from '@/presentation/lib/motion';
 
-export default function BusinessMenuPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function BusinessMenuPage({ params }: { params: { id: string } }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [category, setCategory] = useState('ALL');
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [cartCount, setCartCount] = useState(0);
-  const [notification, setNotification] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchMenu() {
-      try {
-        const res = await fetch(`/api/businesses/${params.id}`);
-        const result = await res.json();
-        setData(result);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchMenu();
-  }, [params.id]);
+  const [toast, setToast] = useState<string | null>(null);
 
   const { addItem, setIsCartOpen } = useCart();
 
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/businesses/${params.id}`);
+        const result = await res.json();
+        if (alive) setData(result);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [params.id]);
+
   const handleAddToCart = (product: any, quantity: number, notes: string) => {
-    const success = addItem({
+    const ok = addItem({
       id: product.id,
       name: product.name,
       price: product.price,
@@ -65,212 +74,274 @@ export default function BusinessMenuPage({
       notes,
     });
 
-    if (success) {
-      setCartCount((prev) => prev + quantity);
-      setNotification(`¡Agregado ${quantity}x "${product.name}" al pedido!`);
-      setTimeout(() => setNotification(null), 3000);
+    if (ok) {
+      setCartCount((n) => n + quantity);
+      setToast(`${quantity}× ${product.name} agregado`);
+      window.setTimeout(() => setToast(null), 3000);
     }
   };
 
+  const business = data?.business;
+  const products: any[] = data?.products ?? [];
+  const categories: string[] = data?.categories ?? [];
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return products.filter((p) => {
+      const matchTerm =
+        !term ||
+        p.name.toLowerCase().includes(term) ||
+        (p.description ?? '').toLowerCase().includes(term);
+      const matchCat = category === 'ALL' || p.categories?.includes(category);
+      return matchTerm && matchCat;
+    });
+  }, [products, search, category]);
+
+  /* ---------------- Estados de carga / error ---------------- */
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center text-slate-400">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-xs">Cargando menú del restaurante...</p>
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <Skeleton className="mb-8 h-44 rounded-[32px]" />
+        <div className="mb-8 flex gap-3">
+          <Skeleton className="h-12 flex-1 rounded-2xl" />
+          <Skeleton className="h-12 w-64 rounded-2xl" />
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-80 rounded-3xl" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (!data?.business) {
+  if (!business) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center text-slate-400">
-        <p className="text-sm font-semibold text-white">Negocio no encontrado</p>
-        <Link href="/spaces" className="text-xs text-emerald-400 hover:underline mt-2 inline-block">
-          Volver a explorar espacios
-        </Link>
+      <div className="mx-auto max-w-3xl px-4 py-24">
+        <EmptyState
+          icon={Store}
+          title="No encontramos este comercio"
+          description="Puede que haya sido dado de baja o que el enlace esté mal."
+          action={
+            <Button href="/spaces" size="sm">
+              Volver a los espacios
+            </Button>
+          }
+        />
       </div>
     );
   }
 
-  const { business, products, categories } = data;
-
-  const filteredProducts = products.filter((p: any) => {
-    const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'ALL' || p.categories?.includes(selectedCategory);
-    return matchesSearch && matchesCategory;
-  });
+  const isOpen = business.isOpen && business.isActive;
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* Business Header Banner */}
-      <div className="relative bg-slate-900 border-b border-slate-800">
+    <div className="pb-24">
+      {/* ---------------- Cabecera del comercio ---------------- */}
+      <header className="relative overflow-hidden border-b border-surface-line">
         {business.bannerUrl && (
-          <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0">
             <img
               src={business.bannerUrl}
-              alt={business.name}
-              className="w-full h-full object-cover opacity-20 blur-sm"
+              alt=""
+              aria-hidden
+              className="h-full w-full object-cover opacity-25 blur-[2px]"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/90 to-slate-950" />
+            <div className="absolute inset-0 bg-gradient-to-b from-void/70 via-void/90 to-void" />
           </div>
         )}
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+        <div className="relative mx-auto max-w-7xl px-4 pb-9 pt-6 sm:px-6 lg:px-8">
           <Link
             href="/spaces"
-            className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-emerald-400 mb-4 transition-colors"
+            className="group mb-6 inline-flex items-center gap-2 text-[12px] font-semibold text-ink-mute transition-colors hover:text-violet-300"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver a Espacios</span>
+            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+            Volver a espacios
           </Link>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE_RUNE }}
+            className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center"
+          >
             <div className="flex items-center gap-4">
               {business.logoUrl ? (
                 <img
                   src={business.logoUrl}
                   alt={business.name}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover bg-slate-800 border-2 border-slate-700 shadow-xl"
+                  className="h-20 w-20 rounded-3xl border border-violet-400/25 object-cover shadow-glow-violet"
                 />
               ) : (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400">
-                  <Store className="w-8 h-8" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-violet-400/25 bg-violet-500/10 text-violet-300">
+                  <Store className="h-8 w-8" />
                 </div>
               )}
 
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                      business.isOpen && business.isActive
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                        : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                    }`}
-                  >
-                    {business.isOpen && business.isActive ? '🟢 Abierto' : '🔴 Cerrado'}
-                  </span>
-                  <span className="text-[11px] text-slate-400">
-                    {business.category?.replace('_', ' ')}
+              <div className="min-w-0">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Badge tone={isOpen ? 'ok' : 'danger'} dot>
+                    {isOpen ? 'Abierto ahora' : 'Cerrado'}
+                  </Badge>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-faint">
+                    {business.category?.replace(/_/g, ' ')}
                   </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                <h1 className="font-display text-[26px] font-bold leading-tight tracking-tight text-white sm:text-4xl">
                   {business.name}
                 </h1>
 
-                <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
-                  <span className="flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="mt-2 flex flex-wrap items-center gap-4 text-[12px] text-ink-mute">
+                  <span className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-violet-400" />
                     {business.ownerPhone}
                   </span>
                   {business.qrCodeUrl && (
-                    <span className="flex items-center gap-1 text-amber-400">
-                      <QrCode className="w-3.5 h-3.5" />
-                      Pago QR Habilitado
+                    <span className="flex items-center gap-1.5 text-warn-soft">
+                      <QrCode className="h-3.5 w-3.5" />
+                      Pago QR habilitado
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Floating Cart Indicator */}
-            {cartCount > 0 && (
+            <AnimatePresence>
+              {cartCount > 0 && (
+                <motion.button
+                  type="button"
+                  onClick={() => setIsCartOpen(true)}
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  whileHover={{ y: -3 }}
+                  transition={tSpring}
+                  className="rune-panel rune-edge flex cursor-pointer items-center gap-3 rounded-2xl p-3 text-left"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-grad-rune font-display text-[13px] font-bold text-white shadow-glow-violet tabular">
+                    {cartCount}
+                  </span>
+                  <span>
+                    <span className="block text-[12px] font-bold text-white">Pedido en curso</span>
+                    <span className="block text-[11px] text-arc-soft">Ver carrito →</span>
+                  </span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+      </header>
+
+      {/* ---------------- Catálogo ---------------- */}
+      <div className="mx-auto max-w-7xl px-4 pt-9 sm:px-6 lg:px-8">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-300" />
+            <label htmlFor="menu-search" className="sr-only">
+              Buscar en el menú
+            </label>
+            <Input
+              id="menu-search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar en este menú…"
+              className="pl-11 pr-10"
+            />
+            {search && (
               <button
-                type="button"
-                onClick={() => setIsCartOpen(true)}
-                className="p-3 rounded-2xl glass-panel border border-emerald-500/30 hover:border-emerald-500/60 flex items-center gap-3 animate-in fade-in transition-all text-left group"
+                onClick={() => setSearch('')}
+                aria-label="Limpiar"
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg p-1.5 text-ink-faint transition-colors hover:text-white"
               >
-                <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-500/30 group-hover:scale-105 transition-transform">
-                  {cartCount}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white">Pedido en Curso</div>
-                  <div className="text-[11px] text-emerald-400">Ver carrito y pagar &rarr;</div>
-                </div>
+                <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Notification Toast */}
-      {notification && (
-        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl glass-dropdown border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-bottom-5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{notification}</span>
-        </div>
-      )}
-
-      {/* Menu Catalog Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* Search & Categories Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          {/* Search Box */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar en el menú de este restaurante..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-xs text-white placeholder-slate-500 outline-none transition-all"
-            />
+          {/* Carrusel de categorías */}
+          <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-surface-line bg-void-800/60 p-1.5">
+            {[{ key: 'ALL', label: `Todo (${products.length})` }, ...categories.map((c) => ({ key: c, label: c }))].map(
+              (c) => {
+                const active = category === c.key;
+                return (
+                  <button
+                    key={c.key}
+                    type="button"
+                    onClick={() => setCategory(c.key)}
+                    className={cn(
+                      'relative shrink-0 cursor-pointer whitespace-nowrap rounded-xl px-3.5 py-2 text-[12px] font-semibold transition-colors',
+                      active ? 'text-white' : 'text-ink-mute hover:text-ink-soft'
+                    )}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="menu-cat"
+                        className="absolute inset-0 rounded-xl border border-violet-400/40 bg-violet-500/20 shadow-glow-violet"
+                        transition={tSpring}
+                      />
+                    )}
+                    <span className="relative">{c.label}</span>
+                  </button>
+                );
+              }
+            )}
           </div>
+        </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('ALL')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                selectedCategory === 'ALL'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-              }`}
-            >
-              Todos los Platos ({products.length})
-            </button>
-
-            {categories.map((cat: string) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-                }`}
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={UtensilsCrossed}
+            title="Nada por acá"
+            description="No hay platos que coincidan con tu búsqueda o categoría."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearch('');
+                  setCategory('ALL');
+                }}
               >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
-          <div className="py-16 text-center text-slate-500 text-xs glass-panel rounded-3xl border border-slate-800">
-            No se encontraron productos que coincidan con la búsqueda o categoría seleccionada.
-          </div>
+                Ver todo el menú
+              </Button>
+            }
+          />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product: any) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onSelect={(prod) => setSelectedProduct(prod)}
-                onQuickAdd={(prod) => handleAddToCart(prod, 1, '')}
-              />
-            ))}
-          </div>
+          <motion.div layout className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <AnimatePresence mode="popLayout">
+              {filtered.map((product, i) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={i}
+                  onSelect={setSelectedProduct}
+                  onQuickAdd={(p) => handleAddToCart(p, 1, '')}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
 
-      {/* Product Detail Modal */}
+      {/* ---------------- Toast ---------------- */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            role="status"
+            aria-live="polite"
+            initial={{ opacity: 0, y: 30, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.96 }}
+            transition={tSpring}
+            className="rune-glass fixed bottom-24 left-1/2 z-[110] flex -translate-x-1/2 items-center gap-2.5 rounded-2xl border-ok/35 px-4 py-3 text-[12px] font-semibold text-ok-soft sm:bottom-6 sm:left-auto sm:right-6 sm:translate-x-0"
+          >
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <ProductModal
         product={selectedProduct}
         isOpen={selectedProduct !== null}

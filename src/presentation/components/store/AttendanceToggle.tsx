@@ -49,13 +49,13 @@ export function AttendanceToggle({
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-5 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="rune-panel rounded-2xl p-5 border border-surface-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="flex items-center gap-3.5">
         <div
           className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
             isOpen
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-lg shadow-emerald-500/10'
-              : 'bg-slate-800 text-slate-400 border border-slate-700'
+              ? 'bg-violet-500/20 text-violet-400 border border-violet-500/40 shadow-lg shadow-violet-500/10'
+              : 'bg-surface-raised text-ink-mute border border-surface-line'
           }`}
         >
           <Power className={`w-6 h-6 ${isOpen ? 'animate-pulse' : ''}`} />
@@ -66,14 +66,14 @@ export function AttendanceToggle({
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase ${
                 isOpen
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                  ? 'bg-violet-500/20 text-violet-300 border border-violet-500/40'
+                  : 'bg-ember/20 text-ember-soft border border-ember/40'
               }`}
             >
               {isOpen ? '🟢 Abierto al Público' : '🔴 Tienda Cerrada'}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-ink-mute mt-0.5">
             {isOpen
               ? 'Tu local está activo y los clientes en Trinidad pueden ordenar tu menú.'
               : 'Tu local figura como cerrado. No recibirás nuevos pedidos.'}
@@ -83,7 +83,7 @@ export function AttendanceToggle({
 
       <div className="flex items-center gap-3">
         {errorMsg && (
-          <span className="text-[11px] text-rose-400 flex items-center gap-1">
+          <span className="text-[11px] text-ember flex items-center gap-1">
             <AlertTriangle className="w-3.5 h-3.5" />
             {errorMsg}
           </span>
@@ -95,8 +95,8 @@ export function AttendanceToggle({
           disabled={loading}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
             isOpen
-              ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
-              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'
+              ? 'bg-ember/10 hover:bg-ember/20 text-ember border border-ember/30'
+              : 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/20'
           } disabled:opacity-50`}
         >
           {loading ? (

@@ -152,13 +152,13 @@ export function DriverWalletSummary({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* 1. HERO BANNER PRINCIPAL DE BILLETERA */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950/80 via-slate-900 to-slate-950 border-2 border-emerald-500/40 p-6 sm:p-8 shadow-2xl shadow-emerald-950/40">
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-950/80 via-void-700 to-void border-2 border-violet-500/40 p-6 sm:p-8 shadow-2xl shadow-violet-950/40">
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-arc/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 text-xs font-bold">
               <Wallet className="w-3.5 h-3.5" />
               <span>Billetera del Repartidor • Turno en Vivo</span>
             </div>
@@ -168,13 +168,13 @@ export function DriverWalletSummary({
             </h2>
 
             {/* FRASE DE RESUMEN DEL DÍA DESTACADA */}
-            <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
-              🛵 Hoy hiciste <strong className="text-emerald-400 font-black">{todayData.deliveries} entregas</strong> •{' '}
+            <p className="text-sm sm:text-base text-ink-soft font-medium leading-relaxed bg-void/60 p-3 rounded-2xl border border-surface-line/80">
+              🛵 Hoy hiciste <strong className="text-violet-400 font-black">{todayData.deliveries} entregas</strong> •{' '}
               Total ganado:{' '}
-              <strong className="text-emerald-300 font-black">{todayData.totalEarnings.toFixed(2)} Bs</strong> •{' '}
+              <strong className="text-violet-300 font-black">{todayData.totalEarnings.toFixed(2)} Bs</strong> •{' '}
               En efectivo:{' '}
-              <strong className="text-amber-300 font-black">{todayData.cashEarnings.toFixed(2)} Bs</strong> •{' '}
-              En QR: <strong className="text-sky-300 font-black">{todayData.qrEarnings.toFixed(2)} Bs</strong>
+              <strong className="text-warn-soft font-black">{todayData.cashEarnings.toFixed(2)} Bs</strong> •{' '}
+              En QR: <strong className="text-info-soft font-black">{todayData.qrEarnings.toFixed(2)} Bs</strong>
             </p>
           </div>
 
@@ -183,7 +183,7 @@ export function DriverWalletSummary({
             <button
               type="button"
               onClick={handleSendWhatsAppReport}
-              className="py-3 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition-all ring-2 ring-emerald-400/40"
+              className="py-3 px-5 rounded-2xl bg-gradient-to-r from-violet-500 to-arc hover:from-violet-400 hover:to-arc text-white font-black text-xs shadow-lg shadow-violet-500/30 flex items-center justify-center gap-2 transition-all ring-2 ring-violet-400/40"
             >
               <Share2 className="w-4 h-4" />
               <span>📲 Enviar Cierre a la Central</span>
@@ -192,16 +192,16 @@ export function DriverWalletSummary({
             <button
               type="button"
               onClick={handleCopyReport}
-              className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-all"
+              className="py-2.5 px-4 rounded-xl bg-void-700 hover:bg-surface-raised border border-surface-line text-ink text-xs font-bold flex items-center justify-center gap-2 transition-all"
             >
               {copied ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400">¡Copiado al Portapapeles!</span>
+                  <CheckCircle2 className="w-4 h-4 text-violet-400" />
+                  <span className="text-violet-400">¡Copiado al Portapapeles!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-slate-400" />
+                  <Copy className="w-4 h-4 text-ink-mute" />
                   <span>Copiar Resumen de Turno</span>
                 </>
               )}
@@ -211,14 +211,14 @@ export function DriverWalletSummary({
       </div>
 
       {/* 2. SELECTOR DE PERÍODO */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-surface-line pb-3 overflow-x-auto">
         <button
           type="button"
           onClick={() => setSelectedPeriod('today')}
           className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 ${
             selectedPeriod === 'today'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+              ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
+              : 'bg-void-700/80 text-ink-mute hover:text-white border border-surface-line'
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -230,8 +230,8 @@ export function DriverWalletSummary({
           onClick={() => setSelectedPeriod('yesterday')}
           className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 ${
             selectedPeriod === 'yesterday'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+              ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
+              : 'bg-void-700/80 text-ink-mute hover:text-white border border-surface-line'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
@@ -243,8 +243,8 @@ export function DriverWalletSummary({
           onClick={() => setSelectedPeriod('week')}
           className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 ${
             selectedPeriod === 'week'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+              ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
+              : 'bg-void-700/80 text-ink-mute hover:text-white border border-surface-line'
           }`}
         >
           <TrendingUp className="w-3.5 h-3.5" />
@@ -256,8 +256,8 @@ export function DriverWalletSummary({
           onClick={() => setSelectedPeriod('allTime')}
           className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 ${
             selectedPeriod === 'allTime'
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+              ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
+              : 'bg-void-700/80 text-ink-mute hover:text-white border border-surface-line'
           }`}
         >
           <Award className="w-3.5 h-3.5" />
@@ -268,65 +268,65 @@ export function DriverWalletSummary({
       {/* 3. TARJETAS DE DESGLOSE FINANCIERO */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Ganado */}
-        <div className="p-5 rounded-3xl bg-slate-950 border border-emerald-500/30 space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+        <div className="p-5 rounded-3xl bg-void border border-violet-500/30 space-y-2 relative overflow-hidden">
+          <div className="flex items-center justify-between text-ink-mute text-xs font-bold">
             <span className="uppercase tracking-wider">Total Ganado</span>
-            <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-emerald-400">
+          <div className="text-3xl font-black text-violet-400">
             {currentStats.totalEarnings.toFixed(2)} <span className="text-lg">Bs</span>
           </div>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-ink-mute">
             {currentStats.deliveries} entrega{currentStats.deliveries === 1 ? '' : 's'} completada{currentStats.deliveries === 1 ? '' : 's'}
           </p>
         </div>
 
         {/* Ganado en Efectivo */}
-        <div className="p-5 rounded-3xl bg-slate-950 border border-amber-500/30 space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+        <div className="p-5 rounded-3xl bg-void border border-warn/30 space-y-2 relative overflow-hidden">
+          <div className="flex items-center justify-between text-ink-mute text-xs font-bold">
             <span className="uppercase tracking-wider">En Efectivo (Mano)</span>
-            <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-warn/20 text-warn flex items-center justify-center">
               <Banknote className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-amber-300">
+          <div className="text-3xl font-black text-warn-soft">
             {currentStats.cashEarnings.toFixed(2)} <span className="text-lg">Bs</span>
           </div>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-ink-mute">
             Comisiones retenidas en efectivo físico
           </p>
         </div>
 
         {/* Ganado en QR */}
-        <div className="p-5 rounded-3xl bg-slate-950 border border-sky-500/30 space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+        <div className="p-5 rounded-3xl bg-void border border-info/30 space-y-2 relative overflow-hidden">
+          <div className="flex items-center justify-between text-ink-mute text-xs font-bold">
             <span className="uppercase tracking-wider">En QR / Pasarela</span>
-            <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-info/20 text-info flex items-center justify-center">
               <QrCode className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-sky-300">
+          <div className="text-3xl font-black text-info-soft">
             {currentStats.qrEarnings.toFixed(2)} <span className="text-lg">Bs</span>
           </div>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-ink-mute">
             Acreditado en billetera digital
           </p>
         </div>
 
         {/* Promedio por carrera */}
-        <div className="p-5 rounded-3xl bg-slate-950 border border-slate-800 space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+        <div className="p-5 rounded-3xl bg-void border border-surface-line space-y-2 relative overflow-hidden">
+          <div className="flex items-center justify-between text-ink-mute text-xs font-bold">
             <span className="uppercase tracking-wider">Tarifa Fija Moto</span>
-            <div className="w-7 h-7 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-surface-raised text-ink-soft flex items-center justify-center">
               <Bike className="w-4 h-4" />
             </div>
           </div>
           <div className="text-3xl font-black text-white">
             10.00 <span className="text-lg">Bs</span>
           </div>
-          <p className="text-[11px] text-emerald-400 font-semibold">
+          <p className="text-[11px] text-violet-400 font-semibold">
             100% de la tarifa para el repartidor
           </p>
         </div>
@@ -334,50 +334,50 @@ export function DriverWalletSummary({
 
       {/* 4. CONTROL DE CAJA Y LIQUIDACIÓN (SI ES HOY) */}
       {selectedPeriod === 'today' && (
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
+        <div className="p-6 rounded-3xl bg-void-700/80 border border-surface-line space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              <ShieldCheck className="w-5 h-5 text-violet-400" />
               <h4 className="font-bold text-white text-sm">
                 Control de Caja y Rendición de Cuentas (Turno en Trinidad)
               </h4>
             </div>
-            <span className="text-xs font-mono text-slate-400">{driverCode}</span>
+            <span className="text-xs font-mono text-ink-mute">{driverCode}</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
+            <div className="p-4 rounded-2xl bg-void/70 border border-surface-line">
+              <span className="text-[10px] text-ink-mute uppercase font-bold block mb-1">
                 Efectivo Recaudado de Clientes
               </span>
               <div className="text-xl font-black text-white">
                 {(todayData.cashCollectedTotal || 0).toFixed(2)} Bs
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-[10px] text-ink-faint mt-1">
                 Dinero total recibido físicamente
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800">
-              <span className="text-[10px] text-amber-400 uppercase font-bold block mb-1">
+            <div className="p-4 rounded-2xl bg-void/70 border border-surface-line">
+              <span className="text-[10px] text-warn uppercase font-bold block mb-1">
                 Comisión Ganada por Viajes
               </span>
-              <div className="text-xl font-black text-amber-300">
+              <div className="text-xl font-black text-warn-soft">
                 {todayData.cashEarnings.toFixed(2)} Bs
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-[10px] text-ink-faint mt-1">
                 Tu ganancia directa en mano
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800">
-              <span className="text-[10px] text-sky-400 uppercase font-bold block mb-1">
+            <div className="p-4 rounded-2xl bg-void/70 border border-surface-line">
+              <span className="text-[10px] text-info uppercase font-bold block mb-1">
                 Saldo Digital a Liquidar
               </span>
-              <div className="text-xl font-black text-sky-300">
+              <div className="text-xl font-black text-info-soft">
                 {todayData.qrEarnings.toFixed(2)} Bs
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-[10px] text-ink-faint mt-1">
                 Por transferir a tu cuenta bancaria
               </p>
             </div>
@@ -389,17 +389,17 @@ export function DriverWalletSummary({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="font-bold text-white text-sm flex items-center gap-2">
-            <Clock className="w-4 h-4 text-emerald-400" />
+            <Clock className="w-4 h-4 text-violet-400" />
             <span>Detalle de Viajes ({filteredOrders.length})</span>
           </h4>
-          <span className="text-xs text-slate-500 font-mono">
+          <span className="text-xs text-ink-faint font-mono">
             {selectedPeriod === 'today' ? 'Hoy' : selectedPeriod}
           </span>
         </div>
 
         {filteredOrders.length === 0 ? (
-          <div className="p-8 rounded-2xl glass-panel border border-slate-800 text-center text-xs text-slate-400">
-            <Bike className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+          <div className="p-8 rounded-2xl rune-panel border border-surface-line text-center text-xs text-ink-mute">
+            <Bike className="w-8 h-8 mx-auto mb-2 text-ink-faint" />
             <p className="font-bold text-white">No hay entregas registradas en este período</p>
           </div>
         ) : (
@@ -408,7 +408,7 @@ export function DriverWalletSummary({
             return (
               <div
                 key={order.id}
-                className="p-4 rounded-2xl glass-panel border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-slate-700 transition-all bg-slate-950/60"
+                className="p-4 rounded-2xl rune-panel border border-surface-line/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-surface-line transition-all bg-void/60"
               >
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -418,18 +418,18 @@ export function DriverWalletSummary({
 
                     {/* BADGE DE MÉTODO DE PAGO */}
                     {isCash ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-warn/20 text-warn-soft border border-warn/30 flex items-center gap-1">
                         <Banknote className="w-3 h-3" />
                         <span>EFECTIVO (Cobrado en mano)</span>
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-info/20 text-info-soft border border-info/30 flex items-center gap-1">
                         <QrCode className="w-3 h-3" />
                         <span>PAGO QR / DIGITAL</span>
                       </span>
                     )}
 
-                    <span className="text-slate-500 text-[11px]">
+                    <span className="text-ink-faint text-[11px]">
                       {new Date(order.updatedAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -437,25 +437,25 @@ export function DriverWalletSummary({
                     </span>
                   </div>
 
-                  <div className="text-slate-300 text-[11px] flex items-center gap-1.5 flex-wrap">
-                    <Store className="w-3 h-3 text-amber-400 shrink-0" />
+                  <div className="text-ink-soft text-[11px] flex items-center gap-1.5 flex-wrap">
+                    <Store className="w-3 h-3 text-warn shrink-0" />
                     <strong>{order.business?.name}</strong>
-                    <span className="text-slate-500">➔</span>
-                    <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                    <span className="text-ink-faint">➔</span>
+                    <MapPin className="w-3 h-3 text-violet-400 shrink-0" />
                     <span>{order.deliveryAddress}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center sm:flex-col items-end justify-between shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+                <div className="flex items-center sm:flex-col items-end justify-between shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-surface-line">
                   <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">
+                    <div className="text-[10px] text-ink-mute uppercase font-semibold">
                       Tu Ganancia
                     </div>
-                    <div className="text-base font-black text-emerald-400">
+                    <div className="text-base font-black text-violet-400">
                       +{Number(order.deliveryFee || 10).toFixed(2)} Bs
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-500">
+                  <div className="text-[10px] text-ink-faint">
                     Total pedido: {Number(order.totalPrice || 0).toFixed(2)} Bs
                   </div>
                 </div>

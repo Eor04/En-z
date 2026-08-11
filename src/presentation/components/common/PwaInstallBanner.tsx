@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, Bell, X, Smartphone, CheckCircle, Sparkles } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Download, Bell, X, Smartphone, CheckCircle, Zap } from 'lucide-react';
 import { usePushNotifications } from '@/presentation/hooks/usePushNotifications';
+import { EASE_RUNE } from '@/presentation/lib/motion';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -23,49 +25,36 @@ export function PwaInstallBanner() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Detectar si ya está en modo standalone PWA
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone ||
       document.referrer.includes('android-app://');
     setIsInstalled(isStandalone);
 
-    // Detectar iOS Safari
     const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
-    setIsIOS(isIosDevice);
+    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
 
-    // Escuchar evento de instalación PWA en Android/Chrome
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-    // Escuchar cuando ya se instaló
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
     });
 
-    const dismissed = localStorage.getItem('pedidos_trinidad_pwa_dismissed');
-    if (dismissed === 'true') {
-      setIsDismissed(true);
-    }
+    if (localStorage.getItem('enz_pwa_dismissed') === 'true') setIsDismissed(true);
 
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setIsInstalled(true);
-      }
+      if (outcome === 'accepted') setIsInstalled(true);
       setDeferredPrompt(null);
     } else if (isIOS) {
       setShowIOSPrompt(true);
@@ -74,118 +63,127 @@ export function PwaInstallBanner() {
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    localStorage.setItem('pedidos_trinidad_pwa_dismissed', 'true');
+    localStorage.setItem('enz_pwa_dismissed', 'true');
   };
 
   const handleActivatePush = async () => {
-    const success = await subscribe();
-    if (success) {
-      setPushStatusMessage('¡Notificaciones Push activadas con éxito! 🔔✨');
+    const ok = await subscribe();
+    if (ok) {
+      setPushStatusMessage('Alertas activadas.');
       setTimeout(() => setPushStatusMessage(null), 4000);
     }
   };
 
-  // Si el usuario cerró el banner, no mostrar nada más
-  if (isDismissed) {
-    return null;
-  }
-
-  // Si ya está instalada y con permisos push concedidos
-  if (isInstalled && isSubscribed) {
-    return null;
-  }
-
-  // Si no hay evento de instalación ni soporte push
-  if (!deferredPrompt && !isIOS && isSubscribed) {
-    return null;
-  }
+  const hidden =
+    isDismissed || (isInstalled && isSubscribed) || (!deferredPrompt && !isIOS && isSubscribed);
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
-      <div className="p-4 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-emerald-500/30 shadow-2xl shadow-emerald-500/10 text-white relative">
-        <button
-          onClick={handleDismiss}
-          className="absolute top-3 right-3 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
-          title="Cerrar aviso"
+    <AnimatePresence>
+      {!hidden && (
+        <motion.aside
+          initial={{ opacity: 0, y: 40, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 30, scale: 0.96 }}
+          transition={{ duration: 0.45, ease: EASE_RUNE, delay: 1.2 }}
+          className="rune-glass fixed bottom-4 left-4 right-4 z-[70] rounded-3xl p-4 sm:left-auto sm:right-6 sm:max-w-sm"
         >
-          <X className="w-4 h-4" />
-        </button>
+          <button
+            onClick={handleDismiss}
+            aria-label="Cerrar aviso"
+            className="absolute right-3 top-3 cursor-pointer rounded-lg p-1.5 text-ink-faint transition-colors hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
 
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-500/20">
-            <Smartphone className="w-5 h-5" />
-          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-violet-300/25 bg-grad-rune text-white shadow-glow-violet">
+              <Smartphone className="h-5 w-5" />
+            </span>
 
-          <div className="flex-1 pr-4">
-            <div className="flex items-center gap-1.5">
-              <h4 className="font-bold text-sm text-white">Instalar App & Alertas</h4>
-              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
-                PWA
-              </span>
-            </div>
-            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              Instala Pedidos Trinidad en tu celular para recibir alertas con vibración aunque tengas la pantalla apagada.
-            </p>
+            <div className="flex-1 pr-5">
+              <h3 className="flex items-center gap-2 font-display text-[13px] font-bold text-white">
+                Instalá En Z
+                <span className="rounded-md border border-violet-400/30 bg-violet-500/15 px-1.5 py-0.5 text-[9px] font-bold text-violet-300">
+                  PWA
+                </span>
+              </h3>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-ink-mute">
+                Sumala a tu pantalla de inicio y recibí alertas con vibración aunque tengas el
+                celular bloqueado.
+              </p>
 
-            {pushStatusMessage && (
-              <div className="mt-2 text-xs font-semibold text-emerald-400 flex items-center gap-1 bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>{pushStatusMessage}</span>
+              <AnimatePresence>
+                {pushStatusMessage && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-2 flex items-center gap-1.5 overflow-hidden rounded-lg border border-ok/25 bg-ok/10 p-2 text-[11px] font-semibold text-ok-soft"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    {pushStatusMessage}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {(deferredPrompt || isIOS) && !isInstalled && (
+                  <button
+                    type="button"
+                    onClick={handleInstallClick}
+                    className="sheen flex cursor-pointer items-center gap-1.5 rounded-xl border border-violet-300/30 bg-grad-rune px-3 py-2 text-[11px] font-bold text-white"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Instalar
+                  </button>
+                )}
+
+                {isSupported && !isSubscribed && permission !== 'granted' && (
+                  <button
+                    type="button"
+                    onClick={handleActivatePush}
+                    disabled={loading}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[11px] font-bold text-warn-soft transition-colors hover:bg-warn/20 disabled:opacity-50"
+                  >
+                    <Bell className="h-3.5 w-3.5" />
+                    {loading ? 'Activando…' : 'Activar alertas'}
+                  </button>
+                )}
+
+                {isSubscribed && (
+                  <button
+                    type="button"
+                    onClick={() => sendTestPush()}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-surface-line px-3 py-2 text-[11px] font-medium text-ink-soft transition-colors hover:border-violet-400/40 hover:text-white"
+                  >
+                    <Zap className="h-3 w-3 text-warn" />
+                    Probar vibración
+                  </button>
+                )}
               </div>
-            )}
 
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              {/* Botón de Instalación */}
-              {(deferredPrompt || isIOS) && !isInstalled && (
-                <button
-                  type="button"
-                  onClick={handleInstallClick}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Instalar en Celular</span>
-                </button>
-              )}
-
-              {/* Botón de Notificaciones Push */}
-              {isSupported && !isSubscribed && permission !== 'granted' && (
-                <button
-                  type="button"
-                  onClick={handleActivatePush}
-                  disabled={loading}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all"
-                >
-                  <Bell className="w-3.5 h-3.5" />
-                  <span>{loading ? 'Activando...' : 'Activar Alertas Push'}</span>
-                </button>
-              )}
-
-              {/* Si ya tiene permisos, botón de prueba */}
-              {isSubscribed && (
-                <button
-                  type="button"
-                  onClick={() => sendTestPush()}
-                  className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium flex items-center gap-1"
-                >
-                  <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span>Probar Vibración</span>
-                </button>
-              )}
+              <AnimatePresence>
+                {showIOSPrompt && isIOS && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-2.5 overflow-hidden"
+                  >
+                    <div className="rounded-xl border border-surface-line bg-void-800/70 p-3 text-[11px] text-ink-soft">
+                      <p className="font-bold text-white">Instalar en iPhone / iPad</p>
+                      <ol className="mt-1 list-inside list-decimal space-y-0.5 text-ink-mute">
+                        <li>Tocá el botón <strong>Compartir</strong> del navegador.</li>
+                        <li>Elegí <strong>“Agregar a inicio”</strong>.</li>
+                      </ol>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-
-            {/* Instrucción para iOS Safari */}
-            {showIOSPrompt && isIOS && (
-              <div className="mt-2.5 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-[11px] text-slate-300 space-y-1">
-                <p className="font-bold text-white">Cómo instalar en iPhone/iPad:</p>
-                <ol className="list-decimal list-inside space-y-0.5 text-slate-400">
-                  <li>Toca el botón <strong>Compartir (icono del cuadrado con flecha ⎋)</strong> abajo.</li>
-                  <li>Desliza y selecciona <strong>&quot;Agregar a Inicio ➕&quot;</strong>.</li>
-                </ol>
-              </div>
-            )}
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 }

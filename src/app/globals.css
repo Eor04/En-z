@@ -2,82 +2,307 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================================
+   EN Z — Sistema visual
+   Emblema: nudo rúnico violeta + Z blanca sobre vacío negro.
+   Todo el sistema se construye sobre 4 ideas: VACÍO · RUNA · ARCO · BRASA
+   ========================================================================= */
+
 @layer base {
   :root {
-    --background: 218 50% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --border: 214 32% 91%;
-    --ring: 160 84% 39%;
+    /* superficies */
+    --ez-void: 258 55% 4%;
+    --ez-abyss: 258 48% 6%;
+    --ez-surface: 257 48% 10%;
+    --ez-raised: 257 51% 13%;
+    --ez-line: 258 45% 22%;
+
+    /* marca */
+    --ez-primary: 262 83% 58%;
+    --ez-arc: 279 91% 65%;
+    --ez-plasma: 255 92% 85%;
+    --ez-ember: 350 89% 60%;
+
+    /* texto */
+    --ez-ink: 255 100% 97%;
+    --ez-ink-mute: 258 22% 65%;
+
+    /* ritmo de motion — un solo lenguaje para toda la app */
+    --ez-dur-fast: 160ms;
+    --ez-dur: 240ms;
+    --ez-dur-slow: 420ms;
+    --ez-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* escala de elevación */
+    --ez-z-base: 0;
+    --ez-z-sticky: 40;
+    --ez-z-drawer: 80;
+    --ez-z-modal: 100;
+    --ez-z-toast: 120;
+    --ez-z-splash: 200;
+
+    color-scheme: dark;
   }
 
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --ring: 160 84% 39%;
+  * {
+    border-color: hsl(var(--ez-line) / 0.55);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-    min-height: 100vh;
+    @apply bg-void text-ink antialiased;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    min-height: 100dvh;
+    touch-action: manipulation;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  ::selection {
+    background: hsl(var(--ez-arc) / 0.35);
+    color: #fff;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  /* Números tabulares en precios, códigos y métricas */
+  .tabular,
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Foco visible y de marca en toda la app (a11y) */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid hsl(var(--ez-arc));
+    outline-offset: 2px;
+    border-radius: 0.5rem;
   }
 }
 
-/* Glassmorphism Styles */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* =========================================================================
+   COMPONENTES BASE
+   ========================================================================= */
+@layer components {
+  /* ---- Superficies ---- */
+  .rune-panel {
+    position: relative;
+    background: linear-gradient(
+      160deg,
+      hsl(var(--ez-surface) / 0.92) 0%,
+      hsl(var(--ez-abyss) / 0.96) 100%
+    );
+    border: 1px solid hsl(var(--ez-line) / 0.7);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow:
+      0 24px 60px -32px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 0 rgba(196, 181, 253, 0.06);
+  }
+
+  .rune-panel-soft {
+    background: hsl(var(--ez-surface) / 0.55);
+    border: 1px solid hsl(var(--ez-line) / 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .rune-glass {
+    background: rgba(19, 13, 38, 0.82);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(168, 139, 250, 0.14);
+    box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.95);
+  }
+
+  /* Borde con degradado (el "hilo" del nudo) */
+  .rune-edge {
+    position: relative;
+  }
+  .rune-edge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      140deg,
+      rgba(168, 85, 247, 0.65),
+      rgba(124, 58, 237, 0.15) 40%,
+      rgba(196, 181, 253, 0.5)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.75;
+    transition: opacity var(--ez-dur) var(--ez-ease);
+  }
+  .rune-edge:hover::before {
+    opacity: 1;
+  }
+
+  /* ---- Texto ---- */
+  .text-rune {
+    background: linear-gradient(120deg, #ffffff 0%, #d8c8ff 40%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-arc {
+    background: linear-gradient(100deg, #c084fc 0%, #f0abfc 50%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-300/80;
+  }
+
+  /* ---- Resplandores ---- */
+  .glow-violet {
+    box-shadow: 0 0 40px -12px rgba(124, 58, 237, 0.75);
+  }
+  .glow-arc {
+    box-shadow: 0 0 44px -10px rgba(168, 85, 247, 0.7);
+  }
+  .glow-ember {
+    box-shadow: 0 0 40px -12px rgba(244, 63, 94, 0.65);
+  }
+
+  /* Halo radial reutilizable para fondos de sección */
+  .halo::after {
+    content: '';
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 60%;
+    background: radial-gradient(
+      60% 60% at 50% 0%,
+      rgba(124, 58, 237, 0.22) 0%,
+      rgba(124, 58, 237, 0) 70%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ---- Skeleton / carga ---- */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(44, 31, 82, 0.5) 25%,
+      rgba(76, 29, 149, 0.35) 50%,
+      rgba(44, 31, 82, 0.5) 75%
+    );
+    background-size: 500px 100%;
+    @apply animate-shimmer rounded-lg;
+  }
+
+  /* ---- Malla rúnica de fondo ---- */
+  .rune-grid {
+    background-image:
+      linear-gradient(rgba(139, 92, 246, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 78%);
+  }
+
+  /* Brillo que recorre un botón/tarjeta al hacer hover */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 25%,
+      rgba(233, 213, 255, 0.28) 45%,
+      transparent 65%
+    );
+    transform: translateX(-130%);
+    transition: transform 0.75s var(--ez-ease);
+    pointer-events: none;
+  }
+  .sheen:hover::after {
+    transform: translateX(130%);
+  }
+
+  /* Barra de scroll horizontal invisible (carruseles de categorías) */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.glass-panel-light {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.glass-dropdown {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
-/* Glow Effects */
-.glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.4);
-}
-
-.glow-amber {
-  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.4);
-}
-
-.glow-indigo {
-  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.4);
-}
-
-/* Custom Scrollbars */
+/* =========================================================================
+   SCROLLBAR GLOBAL
+   ========================================================================= */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
-
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #0b0718;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
+  background: linear-gradient(180deg, #4c1d95, #2c1f52);
   border-radius: 9999px;
+  border: 2px solid #0b0718;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #7c3aed, #4c1d95);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.6);
+/* Leaflet: mapas integrados a la paleta */
+.leaflet-container {
+  background: #0b0718 !important;
+  font-family: var(--font-sans), sans-serif;
+}
+.leaflet-tile {
+  filter: invert(1) hue-rotate(190deg) brightness(0.82) contrast(1.05) saturate(0.7);
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #191031 !important;
+  color: #f4f1ff !important;
+  border: 1px solid #2c1f52;
+}
+.leaflet-bar a {
+  background: #191031 !important;
+  color: #c4b5fd !important;
+  border-color: #2c1f52 !important;
+}
+
+/* =========================================================================
+   ACCESIBILIDAD — respetar prefers-reduced-motion (regla crítica UI/UX Pro Max)
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -77,7 +77,7 @@ export function CloudinaryUploader({
 
   const previewClass =
     aspect === 'logo'
-      ? 'w-24 h-24 rounded-xl object-contain bg-slate-800'
+      ? 'w-24 h-24 rounded-xl object-contain bg-surface-raised'
       : aspect === 'square'
       ? 'w-full rounded-xl object-cover'
       : 'w-full rounded-xl object-cover';
@@ -86,15 +86,15 @@ export function CloudinaryUploader({
     <div>
       {/* Label + Tab toggle */}
       <div className="flex items-center justify-between mb-1.5">
-        <label className="text-xs font-semibold text-slate-300">{label}</label>
+        <label className="text-xs font-semibold text-ink-soft">{label}</label>
         <div className="flex gap-1">
           <button
             type="button"
             onClick={() => setTab('upload')}
             className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all ${
               tab === 'upload'
-                ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40'
-                : 'text-slate-500 hover:text-slate-300'
+                ? 'bg-violet-600/20 text-violet-400 border border-violet-500/40'
+                : 'text-ink-faint hover:text-ink-soft'
             }`}
           >
             <Upload className="w-3 h-3 inline mr-1" />
@@ -105,8 +105,8 @@ export function CloudinaryUploader({
             onClick={() => setTab('url')}
             className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all ${
               tab === 'url'
-                ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40'
-                : 'text-slate-500 hover:text-slate-300'
+                ? 'bg-violet-600/20 text-violet-400 border border-violet-500/40'
+                : 'text-ink-faint hover:text-ink-soft'
             }`}
           >
             <Link className="w-3 h-3 inline mr-1" />
@@ -116,7 +116,7 @@ export function CloudinaryUploader({
       </div>
 
       {errorMsg && (
-        <p className="text-[11px] text-rose-400 mb-1.5">{errorMsg}</p>
+        <p className="text-[11px] text-ember mb-1.5">{errorMsg}</p>
       )}
 
       {tab === 'upload' ? (
@@ -151,21 +151,21 @@ export function CloudinaryUploader({
             onClick={() => fileInputRef.current?.click()}
             className={`w-full rounded-xl border-2 border-dashed cursor-pointer transition-all flex flex-col items-center justify-center gap-2 py-5 ${
               isDragging
-                ? 'border-indigo-500 bg-indigo-500/10'
-                : 'border-slate-700 hover:border-indigo-600/50 hover:bg-slate-800/30'
+                ? 'border-violet-500 bg-violet-500/10'
+                : 'border-surface-line hover:border-violet-600/50 hover:bg-surface-raised/30'
             } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
           >
             {uploading ? (
               <>
-                <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-                <span className="text-xs text-slate-400">Subiendo imagen...</span>
+                <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+                <span className="text-xs text-ink-mute">Subiendo imagen...</span>
               </>
             ) : (
               <>
-                <ImageIcon className="w-6 h-6 text-slate-500" />
-                <span className="text-xs text-slate-400 text-center">
+                <ImageIcon className="w-6 h-6 text-ink-faint" />
+                <span className="text-xs text-ink-mute text-center">
                   {value ? 'Cambiar imagen' : 'Arrastra una foto aquí'}<br />
-                  <span className="text-slate-600">o haz clic · JPG, PNG, WEBP · máx 5MB</span>
+                  <span className="text-ink-faint">o haz clic · JPG, PNG, WEBP · máx 5MB</span>
                 </span>
               </>
             )}
@@ -188,7 +188,7 @@ export function CloudinaryUploader({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="https://images.unsplash.com/..."
-            className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-indigo-500 text-xs text-white placeholder-slate-500 outline-none"
+            className="w-full p-2.5 rounded-xl bg-void-700 border border-surface-line focus:border-violet-500 text-xs text-white placeholder-ink-faint outline-none"
           />
           {value && (
             <img

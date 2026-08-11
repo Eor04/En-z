@@ -2,176 +2,193 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ShoppingBag, ChevronRight, Store, Package } from 'lucide-react';
 import {
-  ShoppingBag,
-  Clock,
-  ChevronRight,
-  Store,
-  CreditCard,
-  QrCode,
-  Banknote,
-  Sparkles,
-  ArrowRight,
-} from 'lucide-react';
+  Badge,
+  Button,
+  EmptyState,
+  Panel,
+  Skeleton,
+  Tabs,
+} from '@/presentation/components/ui';
+import { statusMeta, orderDate } from '@/presentation/lib/orderStatus';
+import { bs } from '@/presentation/lib/utils';
+import { EASE_RUNE } from '@/presentation/lib/motion';
+
+type Filter = 'all' | 'active' | 'done';
+
+const ACTIVE = new Set(['esperando_pago', 'en_preparacion', 'buscando_driver', 'en_camino']);
 
 export default function OrdersHistoryPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Filter>('all');
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    let alive = true;
+    (async () => {
       try {
         const res = await fetch('/api/orders');
         const data = await res.json();
-        setOrders(data.orders || []);
+        if (alive) setOrders(data.orders || []);
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
+    })();
+    return () => {
+      alive = false;
     };
-
-    fetchOrders();
   }, [session]);
 
-  const getStatusBadge = (orderStatus: string) => {
-    switch (orderStatus) {
-      case 'esperando_pago':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            ⏳ Esperando Pago
-          </span>
-        );
-      case 'en_preparacion':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-            🍳 En Cocina
-          </span>
-        );
-      case 'buscando_driver':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-            🛵 Buscando Repartidor
-          </span>
-        );
-      case 'en_camino':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-            ⚡ En Camino
-          </span>
-        );
-      case 'entregado':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            ✓ Entregado
-          </span>
-        );
-      case 'cancelado':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-            ✕ Cancelado
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">
-            {orderStatus}
-          </span>
-        );
-    }
-  };
+  const counts = useMemo(
+    () => ({
+      all: orders.length,
+      active: orders.filter((o) => ACTIVE.has(o.status)).length,
+      done: orders.filter((o) => !ACTIVE.has(o.status)).length,
+    }),
+    [orders]
+  );
+
+  const visible = useMemo(() => {
+    if (filter === 'active') return orders.filter((o) => ACTIVE.has(o.status));
+    if (filter === 'done') return orders.filter((o) => !ACTIVE.has(o.status));
+    return orders;
+  }, [orders, filter]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Historial de Compras</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-          Mis Pedidos
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+      <header className="mb-8">
+        <Badge tone="violet" icon={Package}>
+          Historial
+        </Badge>
+        <h1 className="mt-4 font-display text-[30px] font-bold leading-tight tracking-tight text-white sm:text-4xl">
+          Mis <span className="text-rune">pedidos</span>
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Consulta el estado y tracking de todas tus órdenes en PedidosTrinidad.
+        <p className="mt-2 text-[13px] text-ink-mute sm:text-sm">
+          Seguí el estado de cada pedido en tiempo real, desde la cocina hasta tu puerta.
         </p>
-      </div>
+      </header>
+
+      {!loading && orders.length > 0 && (
+        <div className="mb-6">
+          <Tabs
+            layoutKey="orders-filter"
+            value={filter}
+            onChange={setFilter}
+            className="w-fit"
+            tabs={[
+              { value: 'all', label: 'Todos', count: counts.all },
+              { value: 'active', label: 'En curso', count: counts.active },
+              { value: 'done', label: 'Finalizados', count: counts.done },
+            ]}
+          />
+        </div>
+      )}
 
       {loading ? (
-        <div className="py-20 text-center text-slate-400">
-          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs">Cargando tus pedidos...</p>
-        </div>
-      ) : orders.length === 0 ? (
-        <div className="glass-panel rounded-3xl p-12 text-center border border-slate-800">
-          <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-slate-600" />
-          <h3 className="text-base font-bold text-white mb-2">No tienes pedidos activos</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto mb-6">
-            Aún no has realizado compras. Explora los mejores restaurantes en nuestros patios de comida.
-          </p>
-          <Link
-            href="/spaces"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
-          >
-            <span>Explorar Patios de Comida</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="glass-panel rounded-3xl p-5 sm:p-6 border border-slate-800 hover:border-slate-700 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 shrink-0">
-                  <Store className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-white text-sm">
-                      {order.business?.name || 'Local de Comida'}
-                    </span>
-                    {getStatusBadge(order.status)}
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    {order.items?.map((i: any) => `${i.quantity}x ${i.product?.name || 'Plato'}`).join(', ')}
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-1">
-                    {new Date(order.createdAt).toLocaleDateString('es-BO', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
-                <div className="text-left sm:text-right">
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider">Total</div>
-                  <div className="text-base font-black text-emerald-400">
-                    {order.totalPrice.toFixed(2)} Bs
-                  </div>
-                </div>
-
-                <Link
-                  href={`/orders/${order.id}`}
-                  className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 hover:bg-slate-800 text-xs font-semibold text-white flex items-center gap-1.5 transition-all"
-                >
-                  <span>Ver Tracking</span>
-                  <ChevronRight className="w-4 h-4 text-emerald-400" />
-                </Link>
-              </div>
-            </div>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-3xl" />
           ))}
         </div>
+      ) : orders.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBag}
+          title="Todavía no hay pedidos"
+          description="Cuando hagas tu primer pedido lo vas a ver acá, con su seguimiento en vivo."
+          action={
+            <Button href="/spaces" size="md">
+              Explorar espacios
+            </Button>
+          }
+        />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          icon={Package}
+          title="Nada en esta vista"
+          description="Probá con otro filtro para ver el resto de tus pedidos."
+          action={
+            <Button variant="outline" size="sm" onClick={() => setFilter('all')}>
+              Ver todos
+            </Button>
+          }
+        />
+      ) : (
+        <motion.div layout className="space-y-4">
+          <AnimatePresence mode="popLayout">
+            {visible.map((order, i) => {
+              const meta = statusMeta(order.status);
+              const StatusIcon = meta.icon;
+              return (
+                <motion.div
+                  key={order.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.4, ease: EASE_RUNE, delay: Math.min(i * 0.05, 0.3) }}
+                >
+                  <Link href={`/orders/${order.id}`} className="block">
+                    <Panel
+                      interactive
+                      className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6"
+                    >
+                      <div className="flex min-w-0 items-start gap-4">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-400/25 bg-violet-500/10 text-violet-300">
+                          <Store className="h-5 w-5" />
+                        </span>
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-display text-[14px] font-bold text-white">
+                              {order.business?.name || 'Comercio'}
+                            </span>
+                            <Badge tone={meta.tone} icon={StatusIcon}>
+                              {meta.label}
+                            </Badge>
+                          </div>
+
+                          <p className="mt-1.5 line-clamp-1 text-[12px] text-ink-mute">
+                            {order.items
+                              ?.map((it: any) => `${it.quantity}× ${it.product?.name ?? 'Producto'}`)
+                              .join(' · ')}
+                          </p>
+
+                          <p className="mt-1.5 text-[11px] text-ink-faint tabular">
+                            {orderDate(order.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4 border-t border-surface-line pt-3 sm:justify-end sm:border-t-0 sm:pt-0">
+                        <div className="sm:text-right">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-faint">
+                            Total
+                          </p>
+                          <p className="font-display text-lg font-bold text-arc tabular">
+                            {bs(order.totalPrice)} Bs
+                          </p>
+                        </div>
+
+                        <span className="flex items-center gap-1.5 rounded-2xl border border-surface-line px-4 py-2.5 text-[12px] font-semibold text-white transition-colors group-hover:border-violet-400/50">
+                          Seguimiento
+                          <ChevronRight className="h-4 w-4 text-violet-300 transition-transform duration-300 group-hover:translate-x-0.5" />
+                        </span>
+                      </div>
+                    </Panel>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   );

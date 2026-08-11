@@ -4,8 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ShoppingBag,
   MapPin,
@@ -13,25 +12,111 @@ import {
   CreditCard,
   QrCode,
   Banknote,
-  ArrowRight,
   Store,
   ShieldCheck,
   AlertCircle,
   Clock,
-  Sparkles,
   Layers,
-  CheckCircle2,
-  ExternalLink,
-  ChevronRight,
   Info,
+  Bike,
 } from 'lucide-react';
 import { useCart } from '@/presentation/context/CartContext';
 import { ClientLocationPicker } from '@/presentation/components/maps/ClientLocationPicker';
 import { AddressBook } from '@/presentation/components/maps/AddressBook';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Field,
+  Input,
+  Panel,
+  Reveal,
+  Textarea,
+} from '@/presentation/components/ui';
+import { bs, cn } from '@/presentation/lib/utils';
+import { EASE_RUNE } from '@/presentation/lib/motion';
+
+type Method = 'CASH' | 'QR_MANUAL' | 'GATEWAY_ONLINE';
+
+/** Cabecera numerada reutilizable de cada bloque del checkout. */
+function StepHeader({
+  n,
+  icon: Icon,
+  title,
+  aside,
+}: {
+  n: number;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  aside?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <h2 className="flex items-center gap-3">
+        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/12">
+          <Icon className="h-4 w-4 text-violet-300" />
+          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-violet-400/40 bg-void font-display text-[10px] font-bold text-arc-soft">
+            {n}
+          </span>
+        </span>
+        <span className="font-display text-[15px] font-bold text-white">{title}</span>
+      </h2>
+      {aside}
+    </div>
+  );
+}
+
+const METHODS: Array<{
+  value: Method;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  multiTitle?: string;
+  text: string;
+  multiText?: string;
+  accent: string;
+  tag?: string;
+}> = [
+  {
+    value: 'QR_MANUAL',
+    icon: QrCode,
+    title: 'Pago express con QR',
+    multiTitle: 'Pago mixto con QR por local',
+    text: 'Se genera el QR del comercio para la transferencia (Simple, BCP, BNB, FIE) y adjuntás tu comprobante.',
+    multiText:
+      'Dividimos las cuentas por restaurante. Transferís a cada local y adjuntás los comprobantes en el seguimiento.',
+    accent: 'warn',
+    tag: 'Más usado en Trinidad',
+  },
+  {
+    value: 'GATEWAY_ONLINE',
+    icon: CreditCard,
+    title: 'Tarjeta online',
+    text: 'Cargo único con débito o crédito y confirmación instantánea por webhook.',
+    accent: 'info',
+  },
+  {
+    value: 'CASH',
+    icon: Banknote,
+    title: 'Efectivo al recibir',
+    text: 'Pagás en la puerta directamente al repartidor cuando entregue tu pedido.',
+    accent: 'ok',
+  },
+];
+
+const ACCENT: Record<string, string> = {
+  warn: 'border-warn/50 bg-warn/10 shadow-[0_0_30px_-14px_rgba(245,158,11,0.7)]',
+  info: 'border-info/50 bg-info/10 shadow-[0_0_30px_-14px_rgba(56,189,248,0.7)]',
+  ok: 'border-ok/50 bg-ok/10 shadow-[0_0_30px_-14px_rgba(34,197,94,0.7)]',
+};
+
+const ACCENT_ICON: Record<string, string> = {
+  warn: 'text-warn',
+  info: 'text-info',
+  ok: 'text-ok',
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { data: session } = useSession();
   const {
     items,
     groupedByBusiness,
@@ -44,33 +129,27 @@ export default function CheckoutPage() {
   } = useCart();
 
   const [deliveryAddress, setDeliveryAddress] = useState(
-    '📍 Ubicación GPS: -14.83480, -64.90420 (Trinidad, Beni)'
+    'Ubicación GPS: -14.83480, -64.90420 (Trinidad, Beni)'
   );
-  const [customerPhone, setCustomerPhone] = useState('77889900');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [notes, setNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'QR_MANUAL' | 'GATEWAY_ONLINE'>(
-    'QR_MANUAL'
-  );
+  const [paymentMethod, setPaymentMethod] = useState<Method>('QR_MANUAL');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (items.length === 0) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-24 text-center">
-        <div className="glass-panel rounded-3xl p-8 border border-slate-800">
-          <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-slate-600" />
-          <h2 className="text-xl font-bold text-white mb-2">Tu carrito está vacío</h2>
-          <p className="text-xs text-slate-400 mb-6">
-            Selecciona productos de tus restaurantes y comercios favoritos antes de proceder al checkout.
-          </p>
-          <Link
-            href="/spaces"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all"
-          >
-            <span>Explorar Patios de Comida & Comercios</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+      <div className="mx-auto max-w-xl px-4 py-24">
+        <EmptyState
+          icon={ShoppingBag}
+          title="Tu carrito está vacío"
+          description="Elegí productos de tus comercios favoritos antes de pasar por el checkout."
+          action={
+            <Button href="/spaces" size="md">
+              Explorar espacios
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -79,44 +158,36 @@ export default function CheckoutPage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!deliveryAddress || !deliveryAddress.trim()) {
-      setErrorMessage('Por favor confirma tu ubicación de entrega en el mapa');
+    if (!deliveryAddress.trim()) {
+      setErrorMessage('Confirmá tu ubicación de entrega en el mapa.');
       return;
     }
-
     if (!customerPhone.trim()) {
-      setErrorMessage('Por favor proporciona un teléfono o WhatsApp de contacto para el repartidor');
+      setErrorMessage('Necesitamos un teléfono o WhatsApp para que el repartidor te ubique.');
       return;
     }
 
     setLoading(true);
-
     try {
-      const payload = {
-        deliveryAddress: deliveryAddress.trim(),
-        customerPhone: customerPhone.trim(),
-        notes: notes.trim() || undefined,
-        paymentMethod,
-        items: items.map((i) => ({
-          productId: i.id,
-          quantity: i.quantity,
-          businessId: i.businessId,
-        })),
-      };
-
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          deliveryAddress: deliveryAddress.trim(),
+          customerPhone: customerPhone.trim(),
+          notes: notes.trim() || undefined,
+          paymentMethod,
+          items: items.map((i) => ({
+            productId: i.id,
+            quantity: i.quantity,
+            businessId: i.businessId,
+          })),
+        }),
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No pudimos procesar tu pedido.');
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al procesar el pedido');
-      }
-
-      // Limpiar carrito y redirigir a tracking
       clearCart();
       router.push(`/orders/${data.order.id}`);
     } catch (err: any) {
@@ -127,380 +198,333 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Checkout Rápido por GPS</span>
-          </div>
-
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Encabezado */}
+      <Reveal className="mb-9">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Badge tone="violet" icon={ShieldCheck}>
+            Checkout seguro
+          </Badge>
           {isMultiStore && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 animate-pulse">
-              <Layers className="w-3.5 h-3.5 text-amber-400" />
-              <span>⚡ Pedido Multi-Comercio Detectado ({businessCount} locales)</span>
-            </div>
+            <Badge tone="warn" icon={Layers}>
+              Pedido multi-comercio · {businessCount} locales
+            </Badge>
           )}
         </div>
-
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-          Confirmar Pedido & Ubicación
+        <h1 className="font-display text-[30px] font-bold leading-tight tracking-tight text-white sm:text-4xl">
+          Confirmá tu <span className="text-rune">pedido</span>
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-ink-mute sm:text-sm">
           {isMultiStore
-            ? `Tu pedido incluye platos de ${businessCount} negocios diferentes. El sistema generará el pago mixto y comandas independientes para cada cocina.`
-            : 'Extrae tu ubicación actual por GPS o marca tu casa en el mapa de Trinidad con un solo toque.'}
+            ? `Tu pedido incluye platos de ${businessCount} negocios. Generamos una comanda independiente para cada cocina y un pago mixto.`
+            : 'Marcá tu ubicación con GPS o tocá el mapa de Trinidad, y elegí cómo querés pagar.'}
         </p>
-      </div>
+      </Reveal>
 
-      {errorMessage && (
-        <div className="mb-6 p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-start gap-3 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-bold">Error en el pedido: </span>
-            <span>{errorMessage}</span>
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Form Details (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* 1. Ubicación GPS en Mapa Interactivo */}
-          <div className="glass-panel rounded-3xl p-6 border border-slate-800">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400" />
-                <span>1. Ubicación de Entrega (GPS en Vivo)</span>
-              </h2>
-              <span className="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                Auto-Detección
-              </span>
+      {/* Error */}
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            role="alert"
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ duration: 0.25, ease: EASE_RUNE }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-start gap-3 rounded-2xl border border-danger/40 bg-danger/10 p-4 text-[13px] text-danger-soft">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{errorMessage}</p>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <ClientLocationPicker
-              onLocationChange={({ formattedAddress }) => {
-                setDeliveryAddress(formattedAddress);
-              }}
-            />
-
-            {/* Libreta de Direcciones Frecuentes */}
-            <div className="mt-4 pt-4 border-t border-slate-800">
-              <AddressBook
-                currentAddress={deliveryAddress}
-                onSelectAddress={(addr) => setDeliveryAddress(addr)}
+      <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 gap-7 lg:grid-cols-12">
+        {/* ---------- Columna izquierda ---------- */}
+        <div className="space-y-6 lg:col-span-7">
+          <Reveal>
+            <Panel className="p-6">
+              <StepHeader
+                n={1}
+                icon={MapPin}
+                title="Ubicación de entrega"
+                aside={<Badge tone="ok" dot>GPS en vivo</Badge>}
               />
-            </div>
-          </div>
+              <ClientLocationPicker
+                onLocationChange={({ formattedAddress }) => setDeliveryAddress(formattedAddress)}
+              />
+              <div className="mt-5 border-t border-surface-line pt-5">
+                <AddressBook
+                  currentAddress={deliveryAddress}
+                  onSelectAddress={setDeliveryAddress}
+                />
+              </div>
+            </Panel>
+          </Reveal>
 
-          {/* 2. Datos de Contacto y Notas */}
-          <div className="glass-panel rounded-3xl p-6 border border-slate-800">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Phone className="w-4 h-4 text-emerald-400" />
-              <span>2. Teléfono / WhatsApp & Notas</span>
-            </h2>
-
-            <div className="space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <span>Teléfono o WhatsApp de Contacto</span>
-                  <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="tel"
+          <Reveal delay={0.06}>
+            <Panel className="p-6">
+              <StepHeader n={2} icon={Phone} title="Contacto y notas" />
+              <div className="space-y-5">
+                <Field
                   required
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="Ej. 78901234 o +591 78901234"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 outline-none text-xs"
-                />
-                <span className="text-[10px] text-slate-400 mt-1 block">
-                  El repartidor podrá llamarte o escribirte por WhatsApp al llegar a tu puerta.
-                </span>
+                  htmlFor="phone"
+                  label="Teléfono o WhatsApp"
+                  hint="El repartidor te va a escribir o llamar al llegar."
+                >
+                  <Input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    required
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="Ej. 78901234"
+                  />
+                </Field>
+
+                <Field
+                  htmlFor="notes"
+                  label="Notas para el repartidor"
+                  hint="Opcional, pero ayuda mucho a encontrarte."
+                >
+                  <Textarea
+                    id="notes"
+                    rows={2}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Ej. portón blanco, tocar timbre dos veces, piso 2…"
+                    className="resize-none"
+                  />
+                </Field>
               </div>
+            </Panel>
+          </Reveal>
 
-              <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">
-                  Notas para el Repartidor (Opcional)
-                </label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Ej. Portón blanco, tocar timbre dos veces, edificio piso 2..."
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 outline-none text-xs resize-none"
-                />
-              </div>
-            </div>
-          </div>
+          <Reveal delay={0.12}>
+            <Panel className="p-6">
+              <StepHeader
+                n={3}
+                icon={CreditCard}
+                title="Método de pago"
+                aside={isMultiStore ? <Badge tone="warn">Pago mixto</Badge> : undefined}
+              />
 
-          {/* 3. Método de Pago & Detección de Pago Mixto */}
-          <div className="glass-panel rounded-3xl p-6 border border-slate-800">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-emerald-400" />
-                <span>3. Método de Pago</span>
-              </h2>
-              {isMultiStore && (
-                <span className="text-[10px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
-                  Pago Mixto Multi-Local
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              {/* Option A: QR Manual / Mixto */}
-              <label
-                className={`p-4 rounded-2xl border flex items-start gap-4 cursor-pointer transition-all ${
-                  paymentMethod === 'QR_MANUAL'
-                    ? 'bg-amber-950/20 border-amber-500/50 shadow-md shadow-amber-500/10'
-                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="QR_MANUAL"
-                  checked={paymentMethod === 'QR_MANUAL'}
-                  onChange={() => setPaymentMethod('QR_MANUAL')}
-                  className="mt-1 text-amber-500 focus:ring-amber-500"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <QrCode className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-bold text-white">
-                      {isMultiStore ? 'Pago Mixto con QR por Negocio' : 'Pago Express con QR'}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      Recomendado en Trinidad
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                    {isMultiStore
-                      ? 'El sistema divide las cuentas para cada restaurante. Podrás transferir a la cuenta/QR de cada local de forma directa y adjuntar tus comprobantes en la pantalla de seguimiento.'
-                      : 'Se generará el QR del restaurante para transferencia bancaria (Simple/BCP/BNB/FIE) y podrás adjuntar tu comprobante.'}
-                  </p>
-                </div>
-              </label>
-
-              {/* Multi-Store QR Breakdown Preview when QR_MANUAL is selected and isMultiStore */}
-              {isMultiStore && paymentMethod === 'QR_MANUAL' && (
-                <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-3 animate-in fade-in">
-                  <div className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
-                    <Info className="w-3.5 h-3.5" />
-                    <span>Desglose de Transferencias por Comercio:</span>
-                  </div>
-                  <div className="space-y-2">
-                    {groupedByBusiness.map((group, idx) => (
-                      <div
-                        key={group.businessId}
-                        className="p-2.5 rounded-xl bg-slate-900/80 border border-amber-500/20 flex items-center justify-between text-xs"
+              <div role="radiogroup" aria-label="Método de pago" className="space-y-3">
+                {METHODS.map((m) => {
+                  const active = paymentMethod === m.value;
+                  return (
+                    <div key={m.value}>
+                      <label
+                        className={cn(
+                          'flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition-all duration-200',
+                          active
+                            ? ACCENT[m.accent]
+                            : 'border-surface-line bg-void-800/50 hover:border-violet-500/35'
+                        )}
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
-                            {idx + 1}
-                          </div>
-                          <div>
-                            <div className="font-bold text-white">{group.businessName}</div>
-                            {group.spaceName && (
-                              <div className="text-[10px] text-slate-400">{group.spaceName}</div>
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={m.value}
+                          checked={active}
+                          onChange={() => setPaymentMethod(m.value)}
+                          className="sr-only"
+                        />
+                        <span
+                          className={cn(
+                            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+                            active ? 'border-current' : 'border-surface-line',
+                            active && ACCENT_ICON[m.accent]
+                          )}
+                        >
+                          {active && (
+                            <motion.span
+                              layoutId="pay-dot"
+                              className="h-2.5 w-2.5 rounded-full bg-current"
+                            />
+                          )}
+                        </span>
+
+                        <span className="flex-1">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <m.icon className={cn('h-4 w-4', ACCENT_ICON[m.accent])} />
+                            <span className="font-display text-[13px] font-bold text-white">
+                              {isMultiStore && m.multiTitle ? m.multiTitle : m.title}
+                            </span>
+                            {m.tag && (
+                              <span className="rounded-full border border-warn/30 bg-warn/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-warn-soft">
+                                {m.tag}
+                              </span>
                             )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-black text-amber-300">{group.subtotal.toFixed(2)} Bs</div>
-                          <span className="text-[9px] text-slate-400">Comanda directa</span>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px]">
-                          🛵
-                        </div>
-                        <div>
-                          <div className="font-bold text-white">Tarifa Delivery Trinidad</div>
-                          <div className="text-[10px] text-slate-400">Repartidor en moto</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-emerald-400">{deliveryFee.toFixed(2)} Bs</div>
-                        <span className="text-[9px] text-slate-400">En entrega o QR</span>
-                      </div>
+                          </span>
+                          <span className="mt-1.5 block text-[12px] leading-relaxed text-ink-mute">
+                            {m.value === 'GATEWAY_ONLINE'
+                              ? `Cargo único consolidado de ${bs(total)} Bs.`
+                              : isMultiStore && m.multiText
+                                ? m.multiText
+                                : m.text}
+                          </span>
+                        </span>
+                      </label>
+
+                      {/* Desglose multi-comercio */}
+                      <AnimatePresence>
+                        {isMultiStore && active && m.value !== 'GATEWAY_ONLINE' && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3, ease: EASE_RUNE }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-3 space-y-2 rounded-2xl border border-surface-line bg-void-800/70 p-4">
+                              <p className="flex items-center gap-1.5 text-[11px] font-bold text-violet-300">
+                                <Info className="h-3.5 w-3.5" />
+                                {m.value === 'QR_MANUAL'
+                                  ? 'Transferencias por comercio'
+                                  : 'Efectivo a entregar'}
+                              </p>
+                              {groupedByBusiness.map((g, idx) => (
+                                <div
+                                  key={g.businessId}
+                                  className="flex items-center justify-between gap-3 rounded-xl border border-surface-line/70 bg-surface/60 px-3 py-2.5"
+                                >
+                                  <span className="flex min-w-0 items-center gap-2.5">
+                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-violet-400/30 bg-violet-500/12 font-display text-[10px] font-bold text-violet-300">
+                                      {idx + 1}
+                                    </span>
+                                    <span className="min-w-0">
+                                      <span className="block truncate text-[12px] font-bold text-white">
+                                        {g.businessName}
+                                      </span>
+                                      {g.spaceName && (
+                                        <span className="block text-[10px] text-ink-faint">
+                                          {g.spaceName}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </span>
+                                  <span className="shrink-0 font-display text-[13px] font-bold text-warn-soft tabular">
+                                    {bs(g.subtotal)} Bs
+                                  </span>
+                                </div>
+                              ))}
+                              <div className="flex items-center justify-between gap-3 rounded-xl border border-violet-400/25 bg-violet-500/10 px-3 py-2.5">
+                                <span className="flex items-center gap-2.5">
+                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/20 text-violet-300">
+                                    <Bike className="h-3 w-3" />
+                                  </span>
+                                  <span className="text-[12px] font-bold text-white">
+                                    Envío en Trinidad
+                                  </span>
+                                </span>
+                                <span className="font-display text-[13px] font-bold text-arc tabular">
+                                  {bs(deliveryFee)} Bs
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Option B: Online Gateway */}
-              <label
-                className={`p-4 rounded-2xl border flex items-start gap-4 cursor-pointer transition-all ${
-                  paymentMethod === 'GATEWAY_ONLINE'
-                    ? 'bg-blue-950/20 border-blue-500/50 shadow-md shadow-blue-500/10'
-                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="GATEWAY_ONLINE"
-                  checked={paymentMethod === 'GATEWAY_ONLINE'}
-                  onChange={() => setPaymentMethod('GATEWAY_ONLINE')}
-                  className="mt-1 text-blue-500 focus:ring-blue-500"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs font-bold text-white">Pasarela con Tarjeta Online</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                    Cargo único consolidado de {total.toFixed(2)} Bs con tarjeta de débito/crédito y confirmación instantánea.
-                  </p>
-                </div>
-              </label>
-
-              {/* Option C: Cash */}
-              <label
-                className={`p-4 rounded-2xl border flex items-start gap-4 cursor-pointer transition-all ${
-                  paymentMethod === 'CASH'
-                    ? 'bg-emerald-950/20 border-emerald-500/50 shadow-md shadow-emerald-500/10'
-                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="CASH"
-                  checked={paymentMethod === 'CASH'}
-                  onChange={() => setPaymentMethod('CASH')}
-                  className="mt-1 text-emerald-500 focus:ring-emerald-500"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Banknote className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Efectivo al Recibir</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                    Pagas en efectivo directamente al repartidor cuando entregue todos tus paquetes en tu puerta.
-                  </p>
-                </div>
-              </label>
-
-              {/* Cash Breakdown Preview */}
-              {isMultiStore && paymentMethod === 'CASH' && (
-                <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-2 animate-in fade-in text-xs">
-                  <div className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
-                    <Info className="w-3.5 h-3.5" />
-                    <span>Desglose de Efectivo para el Repartidor:</span>
-                  </div>
-                  {groupedByBusiness.map((g) => (
-                    <div key={g.businessId} className="flex justify-between text-slate-300">
-                      <span>{g.businessName}:</span>
-                      <span className="font-bold text-white">{g.subtotal.toFixed(2)} Bs</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between text-slate-300">
-                    <span>Tarifa Delivery:</span>
-                    <span className="font-bold text-emerald-400">{deliveryFee.toFixed(2)} Bs</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          </Reveal>
         </div>
 
-        {/* Right Column: Order Summary (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="glass-panel rounded-3xl p-6 border border-slate-800 sticky top-24">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-              <div className="flex items-center gap-2">
-                <Store className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-white">
-                  {isMultiStore ? `${businessCount} Locales Asociados` : groupedByBusiness[0]?.businessName}
+        {/* ---------- Resumen ---------- */}
+        <div className="lg:col-span-5">
+          <Reveal delay={0.08}>
+            <Panel className="sticky top-24 p-6">
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-surface-line pb-4">
+                <span className="flex min-w-0 items-center gap-2">
+                  <Store className="h-4 w-4 shrink-0 text-warn" />
+                  <span className="truncate font-display text-[13px] font-bold text-white">
+                    {isMultiStore
+                      ? `${businessCount} locales`
+                      : groupedByBusiness[0]?.businessName}
+                  </span>
+                </span>
+                <span className="shrink-0 text-[11px] text-ink-faint tabular">
+                  {items.length} productos
                 </span>
               </div>
-              <span className="text-xs text-slate-400">{items.length} productos</span>
-            </div>
 
-            {/* Product Items List (Grouped by Business) */}
-            <div className="space-y-4 mb-6 max-h-72 overflow-y-auto pr-1">
-              {groupedByBusiness.map((group) => (
-                <div
-                  key={group.businessId}
-                  className="rounded-2xl bg-slate-900/60 border border-slate-800/80 p-3 space-y-2.5"
-                >
-                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-slate-800/60 font-bold">
-                    <div className="flex items-center gap-1.5 text-amber-300">
-                      <Store className="w-3.5 h-3.5" />
-                      <span>{group.businessName}</span>
+              <div className="mb-5 max-h-72 space-y-3 overflow-y-auto pr-1">
+                {groupedByBusiness.map((group) => (
+                  <div
+                    key={group.businessId}
+                    className="space-y-2 rounded-2xl border border-surface-line bg-void-800/60 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2 border-b border-surface-line/70 pb-2">
+                      <span className="flex min-w-0 items-center gap-1.5 text-[12px] font-bold text-warn-soft">
+                        <Store className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{group.businessName}</span>
+                      </span>
+                      <span className="shrink-0 font-display text-[12px] font-bold text-violet-300 tabular">
+                        {bs(group.subtotal)} Bs
+                      </span>
                     </div>
-                    <span className="text-emerald-400">{group.subtotal.toFixed(2)} Bs</span>
-                  </div>
 
-                  <div className="space-y-2">
                     {group.items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between text-xs">
-                        <div className="flex-1 min-w-0 pr-3">
-                          <div className="text-white font-medium truncate">
-                            {item.quantity}x {item.name}
-                          </div>
+                      <div key={item.id} className="flex items-start justify-between gap-3 text-[12px]">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-ink-soft">
+                            <span className="font-semibold text-white tabular">{item.quantity}×</span>{' '}
+                            {item.name}
+                          </span>
                           {item.notes && (
-                            <div className="text-[10px] text-slate-400 italic truncate">
-                              &quot;{item.notes}&quot;
-                            </div>
+                            <span className="block truncate text-[10px] italic text-ink-faint">
+                              “{item.notes}”
+                            </span>
                           )}
-                        </div>
-                        <span className="text-slate-300 font-bold whitespace-nowrap">
-                          {(item.price * item.quantity).toFixed(2)} Bs
+                        </span>
+                        <span className="shrink-0 font-semibold text-ink-soft tabular">
+                          {bs(item.price * item.quantity)} Bs
                         </span>
                       </div>
                     ))}
                   </div>
+                ))}
+              </div>
+
+              <dl className="space-y-2 border-t border-surface-line pt-4 text-[12px]">
+                <div className="flex justify-between text-ink-mute">
+                  <dt>Subtotal productos</dt>
+                  <dd className="font-semibold text-white tabular">{bs(subtotal)} Bs</dd>
                 </div>
-              ))}
-            </div>
+                <div className="flex justify-between text-ink-mute">
+                  <dt>Envío en Trinidad</dt>
+                  <dd className="font-semibold text-white tabular">{bs(deliveryFee)} Bs</dd>
+                </div>
+                <div className="flex items-center justify-between border-t border-surface-line pt-3">
+                  <dt className="font-display text-[15px] font-bold text-white">Total</dt>
+                  <dd className="font-display text-2xl font-bold text-arc tabular">
+                    {bs(total)} Bs
+                  </dd>
+                </div>
+              </dl>
 
-            {/* Price Calculations */}
-            <div className="space-y-2 pt-4 border-t border-slate-800 text-xs">
-              <div className="flex justify-between text-slate-400">
-                <span>Subtotal productos</span>
-                <span className="font-semibold text-white">{subtotal.toFixed(2)} Bs</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Tarifa Delivery Trinidad</span>
-                <span className="font-semibold text-emerald-400">{deliveryFee.toFixed(2)} Bs</span>
-              </div>
-              <div className="flex justify-between text-base font-black text-white pt-3 border-t border-slate-800">
-                <span>Total a Pagar</span>
-                <span className="text-emerald-400">{total.toFixed(2)} Bs</span>
-              </div>
-            </div>
+              <Button type="submit" size="lg" full loading={loading} className="mt-6">
+                {!loading && <ShieldCheck className="h-4 w-4" />}
+                {loading
+                  ? isMultiStore
+                    ? 'Generando comandas…'
+                    : 'Procesando pedido…'
+                  : `Confirmar · ${bs(total)} Bs`}
+              </Button>
 
-            {/* Submit CTA */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-6 py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Procesando {isMultiStore ? 'Comandas Multi-Comercio...' : 'Pedido...'}</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Confirmar Pedido ({total.toFixed(2)} Bs)</span>
-                </>
-              )}
-            </button>
-
-            <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-slate-500">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Tiempo estimado de entrega: 25 - 40 min</span>
-            </div>
-          </div>
+              <p className="mt-4 flex items-center justify-center gap-2 text-[11px] text-ink-faint">
+                <Clock className="h-3.5 w-3.5" />
+                Entrega estimada: 25 – 40 min
+              </p>
+            </Panel>
+          </Reveal>
         </div>
       </form>
     </div>
