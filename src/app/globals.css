@@ -294,6 +294,50 @@
 }
 
 /* =========================================================================
+   RENDIMIENTO EN MÓVIL
+   `backdrop-filter` obliga al navegador a re-componer todo lo que hay detrás
+   del elemento. Con decenas de tarjetas en pantalla eso hunde el scroll en
+   gama media. Abajo de 768px lo cambiamos por fondos sólidos: se ve
+   prácticamente igual sobre el fondo oscuro y el scroll queda fluido.
+   ========================================================================= */
+@media (max-width: 767px) {
+  .rune-panel,
+  .rune-panel-soft,
+  .rune-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .rune-panel {
+    background: #130d26;
+  }
+  .rune-panel-soft {
+    background: #17102e;
+  }
+  .rune-glass {
+    background: #150e2c;
+  }
+
+  /* El borde con máscara compuesta cuesta una capa extra por tarjeta */
+  .rune-edge::before {
+    display: none;
+  }
+  .rune-edge {
+    border-color: rgba(168, 139, 250, 0.16);
+  }
+
+  /* El barrido de brillo sólo tiene sentido con puntero */
+  .sheen::after {
+    display: none;
+  }
+
+  /* Sombras gigantes: costosas de pintar y casi invisibles en pantalla chica */
+  .rune-panel {
+    box-shadow: 0 12px 30px -18px rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* =========================================================================
    ACCESIBILIDAD — respetar prefers-reduced-motion (regla crítica UI/UX Pro Max)
    ========================================================================= */
 @media (prefers-reduced-motion: reduce) {

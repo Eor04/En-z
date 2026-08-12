@@ -18,6 +18,10 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        /* Teléfonos chicos (iPhone SE ~375px) necesitan su propio escalón */
+        xs: '400px',
+      },
       fontFamily: {
         display: ['var(--font-display)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],

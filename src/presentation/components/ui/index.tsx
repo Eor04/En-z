@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Loader2, X, Inbox } from 'lucide-react';
 import { cn } from '@/presentation/lib/utils';
+import { useIsDesktop } from '@/presentation/hooks/useMediaQuery';
 import { EASE_RUNE, popIn, riseIn, stagger, tSpring, fadeIn } from '@/presentation/lib/motion';
 
 /* =========================================================================
@@ -592,29 +593,57 @@ export function Modal({
 /* =========================================================================
  * FONDO AMBIENTAL — nebulosa + malla rúnica
  * ========================================================================= */
+/**
+ * Nebulosa de fondo.
+ *
+ * En móvil los blobs se pintan estáticos y sin `filter: blur` (el degradado
+ * radial ya da el difuminado): animar tres capas desenfocadas a pantalla
+ * completa cuesta decenas de ms por frame en gama media. En escritorio sí
+ * derivan lentamente.
+ */
 export function AuroraBackground() {
   const reduce = useReducedMotion();
+  const isDesktop = useIsDesktop();
+  const animate = isDesktop && !reduce;
+
+  const blobs = [
+    {
+      className: 'absolute -left-[15%] top-[-10%] h-[52vmax] w-[52vmax]',
+      color: 'rgba(124,58,237,0.30)',
+      motion: { x: [0, 60, 0], y: [0, 40, 0] },
+      duration: 26,
+    },
+    {
+      className: 'absolute right-[-18%] top-[18%] h-[46vmax] w-[46vmax]',
+      color: 'rgba(168,85,247,0.22)',
+      motion: { x: [0, -50, 0], y: [0, 60, 0] },
+      duration: 32,
+    },
+    {
+      className: 'absolute bottom-[-20%] left-[25%] h-[44vmax] w-[44vmax]',
+      color: 'rgba(46,16,101,0.55)',
+      motion: { x: [0, 40, 0] },
+      duration: 38,
+    },
+  ];
+
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-void">
-      <div className="absolute inset-0 rune-grid opacity-70" />
-      <motion.div
-        className="absolute -left-[15%] top-[-10%] h-[52vmax] w-[52vmax] rounded-full blur-[110px]"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.30), transparent 65%)' }}
-        animate={reduce ? undefined : { x: [0, 60, 0], y: [0, 40, 0] }}
-        transition={{ duration: 26, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute right-[-18%] top-[18%] h-[46vmax] w-[46vmax] rounded-full blur-[120px]"
-        style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.22), transparent 65%)' }}
-        animate={reduce ? undefined : { x: [0, -50, 0], y: [0, 60, 0] }}
-        transition={{ duration: 32, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-[-20%] left-[25%] h-[44vmax] w-[44vmax] rounded-full blur-[130px]"
-        style={{ background: 'radial-gradient(circle, rgba(46,16,101,0.55), transparent 65%)' }}
-        animate={reduce ? undefined : { x: [0, 40, 0] }}
-        transition={{ duration: 38, repeat: Infinity, ease: 'easeInOut' }}
-      />
+      <div className="rune-grid absolute inset-0 opacity-70" />
+
+      {blobs.map((b, i) => (
+        <motion.div
+          key={i}
+          className={cn(b.className, 'rounded-full', isDesktop && 'blur-[110px]')}
+          style={{
+            background: `radial-gradient(circle, ${b.color}, transparent 65%)`,
+            willChange: animate ? 'transform' : undefined,
+          }}
+          animate={animate ? b.motion : undefined}
+          transition={{ duration: b.duration, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      ))}
+
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,transparent_35%,#06040D_85%)]" />
     </div>
   );

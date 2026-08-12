@@ -1,94 +1,58 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Download, Bell, X, Smartphone, CheckCircle, Zap } from 'lucide-react';
-import { usePushNotifications } from '@/presentation/hooks/usePushNotifications';
+import { Download, Bell, X, Smartphone, CheckCircle, Share, Plus } from 'lucide-react';
+import { usePwa } from '@/presentation/context/PwaContext';
 import { EASE_RUNE } from '@/presentation/lib/motion';
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-}
-
+/**
+ * Aviso flotante para instalar la PWA y activar notificaciones.
+ *
+ * Si el usuario lo cierra no se pierde nada: las mismas acciones viven en la
+ * barra superior (escritorio) y en el menú de tres líneas (móvil).
+ */
 export function PwaInstallBanner() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
-  const [pushStatusMessage, setPushStatusMessage] = useState<string | null>(null);
+  const {
+    canInstall,
+    isInstalled,
+    isIOS,
+    showIOSHelp,
+    promptInstall,
+    pushSupported,
+    pushSubscribed,
+    pushPermission,
+    pushLoading,
+    enablePush,
+    bannerDismissed,
+    dismissBanner,
+  } = usePwa();
 
-  const { isSupported, isSubscribed, permission, loading, subscribe, sendTestPush } =
-    usePushNotifications({ autoRegisterServiceWorker: true });
+  const [pushMessage, setPushMessage] = React.useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone ||
-      document.referrer.includes('android-app://');
-    setIsInstalled(isStandalone);
-
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
-
-    const handleBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    window.addEventListener('appinstalled', () => {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-    });
-
-    if (localStorage.getItem('enz_pwa_dismissed') === 'true') setIsDismissed(true);
-
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') setIsInstalled(true);
-      setDeferredPrompt(null);
-    } else if (isIOS) {
-      setShowIOSPrompt(true);
-    }
-  };
-
-  const handleDismiss = () => {
-    setIsDismissed(true);
-    localStorage.setItem('enz_pwa_dismissed', 'true');
-  };
-
-  const handleActivatePush = async () => {
-    const ok = await subscribe();
+  const handleEnablePush = async () => {
+    const ok = await enablePush();
     if (ok) {
-      setPushStatusMessage('Alertas activadas.');
-      setTimeout(() => setPushStatusMessage(null), 4000);
+      setPushMessage('Alertas activadas.');
+      window.setTimeout(() => setPushMessage(null), 4000);
     }
   };
 
-  const hidden =
-    isDismissed || (isInstalled && isSubscribed) || (!deferredPrompt && !isIOS && isSubscribed);
+  const needsPush = pushSupported && !pushSubscribed && pushPermission !== 'denied';
+  const visible = !bannerDismissed && (canInstall || needsPush);
 
   return (
     <AnimatePresence>
-      {!hidden && (
+      {visible && (
         <motion.aside
           initial={{ opacity: 0, y: 40, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.96 }}
           transition={{ duration: 0.45, ease: EASE_RUNE, delay: 1.2 }}
-          className="rune-glass fixed bottom-4 left-4 right-4 z-[70] rounded-3xl p-4 sm:left-auto sm:right-6 sm:max-w-sm"
+          className="rune-glass fixed bottom-4 left-3 right-3 z-[70] rounded-3xl p-4 sm:left-auto sm:right-6 sm:max-w-sm"
         >
           <button
-            onClick={handleDismiss}
+            onClick={dismissBanner}
             aria-label="Cerrar aviso"
             className="absolute right-3 top-3 cursor-pointer rounded-lg p-1.5 text-ink-faint transition-colors hover:text-white"
           >
@@ -100,7 +64,7 @@ export function PwaInstallBanner() {
               <Smartphone className="h-5 w-5" />
             </span>
 
-            <div className="flex-1 pr-5">
+            <div className="min-w-0 flex-1 pr-5">
               <h3 className="flex items-center gap-2 font-display text-[13px] font-bold text-white">
                 Instalá En Z
                 <span className="rounded-md border border-violet-400/30 bg-violet-500/15 px-1.5 py-0.5 text-[9px] font-bold text-violet-300">
@@ -113,24 +77,24 @@ export function PwaInstallBanner() {
               </p>
 
               <AnimatePresence>
-                {pushStatusMessage && (
+                {pushMessage && (
                   <motion.p
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-2 flex items-center gap-1.5 overflow-hidden rounded-lg border border-ok/25 bg-ok/10 p-2 text-[11px] font-semibold text-ok-soft"
                   >
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    {pushStatusMessage}
+                    <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+                    {pushMessage}
                   </motion.p>
                 )}
               </AnimatePresence>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                {(deferredPrompt || isIOS) && !isInstalled && (
+                {canInstall && (
                   <button
                     type="button"
-                    onClick={handleInstallClick}
+                    onClick={promptInstall}
                     className="sheen flex cursor-pointer items-center gap-1.5 rounded-xl border border-violet-300/30 bg-grad-rune px-3 py-2 text-[11px] font-bold text-white"
                   >
                     <Download className="h-3.5 w-3.5" />
@@ -138,32 +102,25 @@ export function PwaInstallBanner() {
                   </button>
                 )}
 
-                {isSupported && !isSubscribed && permission !== 'granted' && (
+                {needsPush && (
                   <button
                     type="button"
-                    onClick={handleActivatePush}
-                    disabled={loading}
+                    onClick={handleEnablePush}
+                    disabled={pushLoading}
                     className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[11px] font-bold text-warn-soft transition-colors hover:bg-warn/20 disabled:opacity-50"
                   >
                     <Bell className="h-3.5 w-3.5" />
-                    {loading ? 'Activando…' : 'Activar alertas'}
-                  </button>
-                )}
-
-                {isSubscribed && (
-                  <button
-                    type="button"
-                    onClick={() => sendTestPush()}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-surface-line px-3 py-2 text-[11px] font-medium text-ink-soft transition-colors hover:border-violet-400/40 hover:text-white"
-                  >
-                    <Zap className="h-3 w-3 text-warn" />
-                    Probar vibración
+                    {pushLoading ? 'Activando…' : 'Activar alertas'}
                   </button>
                 )}
               </div>
 
+              <p className="mt-2.5 text-[10px] leading-relaxed text-ink-faint">
+                Si lo cerrás, seguís teniendo estas opciones en el menú de arriba.
+              </p>
+
               <AnimatePresence>
-                {showIOSPrompt && isIOS && (
+                {showIOSHelp && isIOS && !isInstalled && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -172,9 +129,15 @@ export function PwaInstallBanner() {
                   >
                     <div className="rounded-xl border border-surface-line bg-void-800/70 p-3 text-[11px] text-ink-soft">
                       <p className="font-bold text-white">Instalar en iPhone / iPad</p>
-                      <ol className="mt-1 list-inside list-decimal space-y-0.5 text-ink-mute">
-                        <li>Tocá el botón <strong>Compartir</strong> del navegador.</li>
-                        <li>Elegí <strong>“Agregar a inicio”</strong>.</li>
+                      <ol className="mt-1.5 space-y-1 text-ink-mute">
+                        <li className="flex items-center gap-1.5">
+                          <Share className="h-3 w-3 shrink-0 text-violet-300" />
+                          Tocá <strong className="text-white">Compartir</strong>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Plus className="h-3 w-3 shrink-0 text-violet-300" />
+                          Elegí <strong className="text-white">Agregar a inicio</strong>
+                        </li>
                       </ol>
                     </div>
                   </motion.div>

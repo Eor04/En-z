@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { Chakra_Petch, Manrope, JetBrains_Mono } from 'next/font/google';
 import { SessionProvider } from '@/presentation/components/providers/SessionProvider';
 import { CartProvider } from '@/presentation/context/CartContext';
+import { PwaProvider } from '@/presentation/context/PwaContext';
 import { CartDrawer } from '@/presentation/components/cart/CartDrawer';
 import { Navbar } from '@/presentation/components/layout/Navbar';
 import { Footer } from '@/presentation/components/layout/Footer';
@@ -52,8 +53,12 @@ export const metadata: Metadata = {
     title: 'En Z',
   },
   icons: {
-    icon: '/icons/icon-192x192.svg',
-    apple: '/icons/icon-192x192.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icons/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icons/icon-192x192.png', type: 'image/png', sizes: '192x192' },
+    ],
+    apple: '/icons/apple-touch-icon.png',
   },
 };
 
@@ -64,7 +69,11 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="es"
@@ -73,24 +82,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-dvh flex-col bg-void text-ink antialiased">
         <SessionProvider>
           <CartProvider>
-            <AuroraBackground />
-            <EnZSplash />
+            <PwaProvider>
+              <AuroraBackground />
+              <EnZSplash />
 
-            {/* a11y: salto directo al contenido (regla skip-links) */}
-            <a
-              href="#contenido"
-              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[130] focus:rounded-xl focus:bg-violet-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
-            >
-              Saltar al contenido
-            </a>
+              {/* a11y: salto directo al contenido (regla skip-links) */}
+              <a
+                href="#contenido"
+                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[130] focus:rounded-xl focus:bg-violet-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+              >
+                Saltar al contenido
+              </a>
 
-            <Navbar />
-            <main id="contenido" className="relative flex-1">
-              {children}
-            </main>
-            <CartDrawer />
-            <PwaInstallBanner />
-            <Footer />
+              <Navbar />
+              <main id="contenido" className="relative flex-1">
+                {children}
+              </main>
+              <CartDrawer />
+              <PwaInstallBanner />
+              <Footer />
+            </PwaProvider>
           </CartProvider>
         </SessionProvider>
       </body>

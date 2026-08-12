@@ -1,5 +1,5 @@
 // Service Worker de En Z (PWA & Web Push)
-const CACHE_NAME = 'en-z-v2';
+const CACHE_NAME = 'en-z-v3';
 const OFFLINE_FALLBACK = '/';
 
 self.addEventListener('install', (event) => {
@@ -21,8 +21,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'En Z',
     body: 'Tienes una nueva actualización de pedido.',
-    icon: '/icons/icon-192x192.svg',
-    badge: '/icons/icon-192x192.svg',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
     url: '/',
     tag: 'en-z-notification',
     vibrate: [200, 100, 200, 100, 200, 100, 400],
@@ -41,8 +41,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'En Z';
   const options = {
     body: data.body,
-    icon: data.icon || '/icons/icon-192x192.svg',
-    badge: data.badge || '/icons/icon-192x192.svg',
+    icon: data.icon || '/icons/icon-192x192.png',
+    badge: data.badge || '/icons/icon-192x192.png',
     tag: data.tag || 'pedidos-trinidad-alert',
     renotify: true,
     requireInteraction: true, // Mantener en pantalla hasta que el usuario la toque

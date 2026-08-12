@@ -7,9 +7,9 @@ import { cn } from '@/presentation/lib/utils';
 /**
  * EN Z — Logo oficial (imagen real).
  *
- * El archivo vive en `public/brand/en-z-logo.png` y está sobre fondo negro puro.
- * Usamos `mix-blend-mode: screen` para que ese negro desaparezca: así el emblema
- * se apoya sobre cualquier fondo y el aura animada puede verse por detrás.
+ * El archivo vive en `public/brand/en-z-logo.png` y trae canal alfa real
+ * (52% del lienzo es transparente), así que se apoya sobre cualquier fondo sin
+ * necesidad de blend modes — y el aura animada se ve por detrás tal cual.
  *
  * Si el archivo todavía no existe, cae automáticamente al emblema vectorial
  * (`EnZMark`), de modo que la app nunca queda sin marca.
@@ -75,7 +75,7 @@ export function EnZLogo({ size = 40, className, glow = true, priority, fill }: E
         alt="En Z"
         loading={priority ? 'eager' : 'lazy'}
         onError={() => setFailed(true)}
-        className="relative h-full w-full object-contain mix-blend-screen"
+        className="relative h-full w-full object-contain"
         draggable={false}
       />
     </span>

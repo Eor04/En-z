@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { EnZLogo } from './EnZLogo';
+import { useIsDesktop } from '@/presentation/hooks/useMediaQuery';
 import { EASE_RUNE } from '@/presentation/lib/motion';
 
 const SESSION_KEY = 'enz:splash-seen';
@@ -45,8 +46,15 @@ const polar = (deg: number, r: number) => {
 
 export function EnZSplash() {
   const reduce = useReducedMotion();
+  const isDesktop = useIsDesktop();
   const [visible, setVisible] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  /* En móvil recortamos la cantidad de capas animadas: menos rayos, menos
+     chispas y sin gradientes cónicos desenfocados (los más caros de pintar). */
+  const rays = isDesktop ? RAYS : RAYS.filter((_, i) => i % 2 === 0);
+  const bolts = isDesktop ? BOLTS : BOLTS.slice(0, 4);
+  const sparks = isDesktop ? SPARKS : SPARKS.filter((_, i) => i % 2 === 0);
 
   const dismiss = React.useCallback(() => {
     setVisible(false);
@@ -88,7 +96,7 @@ export function EnZSplash() {
           role="status"
           aria-label="Cargando En Z"
           onClick={dismiss}
-          className="fixed inset-0 z-[200] flex cursor-pointer flex-col items-center justify-center overflow-hidden bg-void"
+          className="fixed inset-0 z-[200] flex cursor-pointer flex-col items-center justify-center overflow-hidden bg-void px-4"
           initial={{ opacity: 1 }}
           exit={{
             opacity: 0,
@@ -97,8 +105,10 @@ export function EnZSplash() {
             transition: { duration: 0.6, ease: EASE_RUNE },
           }}
         >
-          {/* =============== AURA + RAYOS + LOGO =============== */}
-          <div className="relative flex h-[62vmin] max-h-[440px] w-[62vmin] max-w-[440px] items-center justify-center">
+          {/* =============== AURA + RAYOS + LOGO ===============
+              `aspect-square` + ancho acotado por vmin Y vh: así el emblema
+              nunca empuja al texto fuera de pantalla en móvil apaisado. */}
+          <div className="relative flex aspect-square w-[min(62vmin,42vh,440px)] items-center justify-center">
             {/* Bruma violeta de fondo */}
             <motion.div
               aria-hidden
@@ -117,7 +127,7 @@ export function EnZSplash() {
             />
 
             {/* Aura giratoria: los "brazos" de energía de los costados */}
-            {!reduce && (
+            {!reduce && isDesktop && (
               <>
                 <motion.div
                   aria-hidden
@@ -192,7 +202,7 @@ export function EnZSplash() {
 
               {/* Rayos radiales que laten hacia afuera */}
               <g>
-                {RAYS.map(([angle, len, w, delay], i) => {
+                {rays.map(([angle, len, w, delay], i) => {
                   const [x1, y1] = polar(angle, 122);
                   const [x2, y2] = polar(angle, 122 + len);
                   return (
@@ -227,7 +237,7 @@ export function EnZSplash() {
 
               {/* Descargas eléctricas (los rayos del logo, saliendo hacia afuera) */}
               <g filter="url(#bolt-glow)">
-                {BOLTS.map((d, i) => (
+                {bolts.map((d, i) => (
                   <motion.path
                     key={i}
                     d={d}
@@ -257,7 +267,7 @@ export function EnZSplash() {
 
               {/* Chispas de nebulosa */}
               <g>
-                {SPARKS.map(([cx, cy, r, delay], i) => (
+                {sparks.map(([cx, cy, r, delay], i) => (
                   <motion.circle
                     key={i}
                     cx={cx}
@@ -315,7 +325,7 @@ export function EnZSplash() {
           </div>
 
           {/* =============== MARCA =============== */}
-          <div className="relative -mt-2 flex items-end gap-[0.35em] font-display text-4xl font-bold tracking-[0.35em] text-white sm:text-5xl">
+          <div className="relative -mt-1 flex items-end gap-[0.3em] font-display text-3xl font-bold tracking-[0.3em] text-white xs:text-4xl sm:gap-[0.35em] sm:text-5xl sm:tracking-[0.35em]">
             {WORD.map((ch, i) => (
               <motion.span
                 key={ch}
@@ -334,7 +344,7 @@ export function EnZSplash() {
           </div>
 
           <motion.p
-            className="mt-3 text-[11px] font-semibold uppercase tracking-[0.42em] text-violet-300/70"
+            className="mt-3 px-4 text-center text-[10px] font-semibold uppercase tracking-[0.32em] text-violet-300/70 sm:text-[11px] sm:tracking-[0.42em]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: reduce ? 0.2 : 2.4, duration: 0.5 }}
@@ -342,7 +352,7 @@ export function EnZSplash() {
             Delivery · Trinidad
           </motion.p>
 
-          <div className="mt-9 h-[3px] w-44 overflow-hidden rounded-full bg-violet-500/15">
+          <div className="mt-7 h-[3px] w-36 overflow-hidden rounded-full bg-violet-500/15 sm:mt-9 sm:w-44">
             <motion.div
               className="h-full rounded-full bg-grad-rune"
               initial={{ width: '0%' }}
@@ -352,7 +362,7 @@ export function EnZSplash() {
           </div>
 
           <motion.span
-            className="absolute bottom-8 text-[10px] uppercase tracking-[0.3em] text-ink-faint"
+            className="absolute bottom-6 text-[10px] uppercase tracking-[0.3em] text-ink-faint sm:bottom-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.7, duration: 0.6 }}

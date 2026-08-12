@@ -21,6 +21,10 @@ import {
   Package,
 } from 'lucide-react';
 import { EnZLogo } from '@/presentation/components/brand/EnZLogo';
+import {
+  PwaHeaderActions,
+  PwaMenuActions,
+} from '@/presentation/components/common/PwaControls';
 import { Badge, Button } from '@/presentation/components/ui';
 import { cn, initials } from '@/presentation/lib/utils';
 import { EASE_RUNE, tSpring } from '@/presentation/lib/motion';
@@ -223,6 +227,10 @@ export function Navbar() {
 
           {/* Acciones */}
           <div className="flex items-center gap-2">
+            {/* Instalar app + notificaciones (siempre accesibles, no se pierden
+                al cerrar el aviso flotante) */}
+            <PwaHeaderActions className="hidden lg:flex" />
+
             {/* Switcher de roles demo */}
             <div className="relative hidden sm:block">
               <button
@@ -314,7 +322,7 @@ export function Navbar() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Menú"
               aria-expanded={mobileOpen}
-              className="cursor-pointer rounded-xl border border-surface-line p-2.5 text-ink-soft transition-colors hover:border-violet-500/40 hover:text-white md:hidden"
+              className="cursor-pointer rounded-xl border border-surface-line p-2.5 text-ink-soft transition-colors hover:border-violet-500/40 hover:text-white lg:hidden"
             >
               {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -327,7 +335,7 @@ export function Navbar() {
         {mobileOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-30 bg-void/80 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-30 bg-void/80 backdrop-blur-sm lg:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -338,7 +346,7 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: EASE_RUNE }}
-              className="rune-glass fixed inset-x-3 top-[76px] z-40 rounded-3xl p-3 md:hidden"
+              className="rune-glass fixed inset-x-3 top-[76px] z-40 max-h-[calc(100dvh-92px)] overflow-y-auto rounded-3xl p-3 lg:hidden"
             >
               {[...NAV, ...(portal ? [portal] : [])].map((item, i) => (
                 <motion.div
@@ -370,6 +378,9 @@ export function Navbar() {
                   </Button>
                 </div>
               )}
+
+              {/* Instalar app y notificaciones, también acá dentro */}
+              <PwaMenuActions onDone={() => setMobileOpen(false)} />
             </motion.nav>
           </>
         )}
