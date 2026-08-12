@@ -72,6 +72,44 @@ export async function requireUser(roles?: SessionUser['role'][]): Promise<Sessio
   return { ...user, role };
 }
 
+/** El pedido tiene que ser de este cliente (o quien pregunta es ADMIN). */
+export async function requireOwnedOrder(user: SessionUser, orderId: string) {
+  if (!orderId) throw new AuthError('Falta el pedido.', 400);
+  if (user.role === 'ADMIN') return;
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { customerId: true },
+  });
+
+  if (!order) throw new AuthError('Pedido no encontrado.', 404);
+  if (order.customerId !== user.id) throw new AuthError('Este pedido no es tuyo.', 403);
+}
+
+/** El comercio tiene que pertenecer a este usuario (o ser ADMIN). */
+export async function requireOwnedBusiness(user: SessionUser, businessId: string) {
+  if (!businessId) throw new AuthError('Falta el comercio.', 400);
+  if (user.role === 'ADMIN') return;
+
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { ownerId: true },
+  });
+
+  if (!business) throw new AuthError('Comercio no encontrado.', 404);
+  if (business.ownerId !== user.id) throw new AuthError('Este comercio no es tuyo.', 403);
+}
+
+/** Devuelve el comercio del dueño autenticado. */
+export async function getOwnBusinessId(user: SessionUser): Promise<string | null> {
+  if (user.role !== 'BUSINESS_OWNER') return null;
+  const business = await prisma.business.findFirst({
+    where: { ownerId: user.id },
+    select: { id: true },
+  });
+  return business?.id ?? null;
+}
+
 /** Convierte un AuthError en respuesta JSON; el resto se relanza. */
 export function authErrorResponse(error: unknown) {
   if (error instanceof AuthError) {

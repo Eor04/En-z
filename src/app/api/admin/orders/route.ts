@@ -2,11 +2,14 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { ListGlobalAuditOrders } from '@/application/use-cases/admin/ListGlobalAuditOrders';
+import { requireUser, authErrorResponse } from '@/infrastructure/services/auth/session-guards';
 
 const listGlobalOrders = new ListGlobalAuditOrders();
 
 export async function GET(req: Request) {
   try {
+    await requireUser(['ADMIN']);
+
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') as any;
     const paymentMethod = searchParams.get('paymentMethod') as any;
@@ -24,6 +27,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ orders });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     return NextResponse.json(
       { error: error.message || 'Error al obtener libro global de órdenes' },
       { status: 500 }

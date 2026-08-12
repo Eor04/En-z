@@ -1,21 +1,20 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/infrastructure/services/auth/auth-options';
+import { requireUser, getOwnBusinessId, authErrorResponse } from '@/infrastructure/services/auth/session-guards';
 import prisma from '@/infrastructure/db/prisma';
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const user = session?.user as any;
+    // Sin sesión devolvía las ventas y ganancias del primer comercio de la base
+    const user = await requireUser(['BUSINESS_OWNER', 'ADMIN']);
     const { searchParams } = new URL(req.url);
     const period = searchParams.get('period') || '7'; // días
 
-    // Obtener el negocio del usuario
-    let business = user?.id
-      ? await prisma.business.findFirst({ where: { ownerId: user.id } })
-      : await prisma.business.findFirst();
+    const ownId = await getOwnBusinessId(user);
+    const business = ownId
+      ? await prisma.business.findUnique({ where: { id: ownId } })
+      : null;
 
     if (!business) {
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
@@ -153,6 +152,9 @@ export async function GET(req: Request) {
       paymentMethods,
     });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('[store/metrics]', error);
     return NextResponse.json(
       { error: error.message || 'Error al obtener métricas del negocio' },

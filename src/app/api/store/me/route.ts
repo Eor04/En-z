@@ -1,36 +1,22 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/infrastructure/services/auth/auth-options';
+import { requireUser, getOwnBusinessId, authErrorResponse } from '@/infrastructure/services/auth/session-guards';
 import prisma from '@/infrastructure/db/prisma';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    const user = session?.user as any;
+    // Sin sesión caía al primer comercio de la base: cualquiera veía el menú,
+    // el QR de cobro y los datos del dueño de un negocio ajeno.
+    const user = await requireUser(['BUSINESS_OWNER', 'ADMIN']);
 
-    let business = null;
-
-    if (user?.id) {
-      business = await prisma.business.findFirst({
-        where: { ownerId: user.id },
-        include: {
-          space: true,
-          products: true,
-        },
-      });
-    }
-
-    if (!business) {
-      // Fallback para pruebas/demo
-      business = await prisma.business.findFirst({
-        include: {
-          space: true,
-          products: true,
-        },
-      });
-    }
+    const businessId = await getOwnBusinessId(user);
+    const business = businessId
+      ? await prisma.business.findUnique({
+          where: { id: businessId },
+          include: { space: true, products: true },
+        })
+      : null;
 
     if (!business) {
       return NextResponse.json({ error: 'No se encontró negocio asignado' }, { status: 404 });
@@ -38,6 +24,9 @@ export async function GET() {
 
     return NextResponse.json({ business });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     return NextResponse.json(
       { error: error.message || 'Error al obtener datos del negocio' },
       { status: 500 }
@@ -46,14 +35,14 @@ export async function GET() {
 }
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const user = session?.user as any;
+    const user = await requireUser(['BUSINESS_OWNER', 'ADMIN']);
     const body = await req.json();
     const { qrCodeUrl } = body;
 
-    let business = user?.id
-      ? await prisma.business.findFirst({ where: { ownerId: user.id } })
-      : await prisma.business.findFirst();
+    const businessId = await getOwnBusinessId(user);
+    const business = businessId
+      ? await prisma.business.findUnique({ where: { id: businessId } })
+      : null;
 
     if (!business) {
       return NextResponse.json({ error: 'No se encontró negocio asignado' }, { status: 404 });
@@ -66,6 +55,9 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true, business: updated });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     return NextResponse.json(
       { error: error.message || 'Error al actualizar negocio' },
       { status: 500 }

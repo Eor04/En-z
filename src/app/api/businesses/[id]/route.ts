@@ -1,8 +1,11 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/infrastructure/services/auth/auth-options';
+import {
+  requireUser,
+  requireOwnedBusiness,
+  authErrorResponse,
+} from '@/infrastructure/services/auth/session-guards';
 import { PrismaBusinessRepository } from '@/infrastructure/repositories/PrismaBusinessRepository';
 import { PrismaProductRepository } from '@/infrastructure/repositories/PrismaProductRepository';
 import { GetBusinessMenu } from '@/application/use-cases/spaces-catalog/GetBusinessMenu';
@@ -37,16 +40,26 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // Sin sesión, la identidad caía al propio dueño del comercio (o a un
+    // 'admin-test-id'): cualquiera podía abrir, cerrar o suspender un local.
+    const user = await requireUser(['BUSINESS_OWNER', 'ADMIN']);
+    await requireOwnedBusiness(user, params.id);
+
     const body = await req.json();
 
-    const userId = (session?.user as any)?.id || (await businessRepository.findById(params.id))?.ownerId || 'admin-test-id';
-    const userRole = (session?.user as any)?.role || 'BUSINESS_OWNER';
+    // Sólo el admin puede activar/suspender un comercio; el dueño únicamente
+    // abre y cierra su atención diaria.
+    if (body.isActive !== undefined && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Sólo la administración puede activar o suspender un comercio.' },
+        { status: 403 }
+      );
+    }
 
     const updatedBusiness = await toggleBusinessStatus.execute({
       businessId: params.id,
-      userId,
-      userRole,
+      userId: user.id,
+      userRole: user.role,
       isOpen: body.isOpen,
       isActive: body.isActive,
     });
@@ -56,6 +69,9 @@ export async function PATCH(
       business: updatedBusiness.toJSON(),
     });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     return NextResponse.json(
       { error: error.message || 'Error al actualizar estado del comercio' },
       { status: 400 }

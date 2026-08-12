@@ -2,14 +2,14 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { ManageSpacesAndBusinessesAdmin } from '@/application/use-cases/admin/ManageSpacesAndBusinessesAdmin';
+import { requireUser, authErrorResponse } from '@/infrastructure/services/auth/session-guards';
 
 const manageAdmin = new ManageSpacesAndBusinessesAdmin();
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
+    await requireUser(['ADMIN']);
+
     const body = await req.json();
 
     // Si viene la acción de congelar/descongelar
@@ -21,7 +21,9 @@ export async function PATCH(
       );
       return NextResponse.json({
         success: true,
-        message: body.isActive ? 'Espacio reactivado correctamente' : 'Espacio congelado por mensualidad',
+        message: body.isActive
+          ? 'Espacio reactivado correctamente'
+          : 'Espacio congelado por mensualidad',
         space: updated,
       });
     }
@@ -34,6 +36,9 @@ export async function PATCH(
       space: updated,
     });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     return NextResponse.json(
       { error: error.message || 'Error al actualizar espacio' },
       { status: 400 }
@@ -41,14 +46,16 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
+    await requireUser(['ADMIN']);
+
     await manageAdmin.deleteSpace(params.id);
     return NextResponse.json({ success: true, message: 'Espacio eliminado' });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     return NextResponse.json(
       { error: error.message || 'Error al eliminar espacio' },
       { status: 400 }
