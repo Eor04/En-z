@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ShoppingBag,
@@ -19,6 +20,8 @@ import {
   Layers,
   Info,
   Bike,
+  LogIn,
+  UserX,
 } from 'lucide-react';
 import { useCart } from '@/presentation/context/CartContext';
 import { ClientLocationPicker } from '@/presentation/components/maps/ClientLocationPicker';
@@ -31,6 +34,7 @@ import {
   Input,
   Panel,
   Reveal,
+  Skeleton,
   Textarea,
 } from '@/presentation/components/ui';
 import { bs, cn } from '@/presentation/lib/utils';
@@ -117,6 +121,7 @@ const ACCENT_ICON: Record<string, string> = {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
   const {
     items,
     groupedByBusiness,
@@ -136,6 +141,52 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<Method>('QR_MANUAL');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const role = (session?.user as any)?.role as string | undefined;
+
+  /* --- Puerta de acceso: hacer un pedido exige sesión de cliente --- */
+  if (sessionStatus === 'loading') {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-24">
+        <Skeleton className="h-72 rounded-3xl" />
+      </div>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-24">
+        <EmptyState
+          icon={LogIn}
+          title="Iniciá sesión para pedir"
+          description="Necesitamos tu cuenta para asociarte el pedido, avisarte cuando avance y que puedas seguirlo en vivo. Tu carrito te espera."
+          action={
+            <Button href="/auth/login?tab=customer&callbackUrl=/checkout" size="md">
+              <LogIn className="h-4 w-4" />
+              Iniciar sesión o registrarme
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (role !== 'CUSTOMER') {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-24">
+        <EmptyState
+          icon={UserX}
+          title="Entrá con una cuenta de cliente"
+          description="Tu sesión actual es de otro tipo de usuario. Los pedidos sólo pueden hacerse desde una cuenta de cliente."
+          action={
+            <Button href="/auth/login?tab=customer&callbackUrl=/checkout" size="md">
+              Cambiar de cuenta
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

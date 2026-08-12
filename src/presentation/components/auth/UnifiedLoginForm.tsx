@@ -95,6 +95,11 @@ export function UnifiedLoginForm() {
           : `Error de autenticación: ${nextAuthError}`
     : null;
 
+  /* Volver a donde el usuario quería ir (ej. /checkout tras la puerta de acceso).
+     Se restringe a rutas internas para no abrir un open redirect. */
+  const rawCallback = searchParams.get('callbackUrl') ?? '';
+  const callbackUrl = rawCallback.startsWith('/') && !rawCallback.startsWith('//') ? rawCallback : '/spaces';
+
   const [activeTab, setActiveTab] = useState<AuthTab>(initialTab);
   // /auth/register redirige acá con ?mode=register
   const [isRegistering, setIsRegistering] = useState(
@@ -143,7 +148,7 @@ export function UnifiedLoginForm() {
                 ? '/driver/dashboard'
                 : activeTab === 'ADMIN'
                   ? '/admin/dashboard'
-                  : '/spaces';
+                  : callbackUrl;
           router.push(dest);
           router.refresh();
         }, 700);
@@ -199,7 +204,7 @@ export function UnifiedLoginForm() {
       if (loginRes?.error) setErrorMsg(loginRes.error);
       else
         setTimeout(() => {
-          router.push('/spaces');
+          router.push(callbackUrl);
           router.refresh();
         }, 700);
     } catch (err: any) {
@@ -213,7 +218,7 @@ export function UnifiedLoginForm() {
     setLoadingGoogle(true);
     setErrorMsg(null);
     try {
-      await signIn('google', { callbackUrl: '/spaces' });
+      await signIn('google', { callbackUrl });
     } catch {
       setErrorMsg('No pudimos conectar con Google. Intentá de nuevo.');
       setLoadingGoogle(false);

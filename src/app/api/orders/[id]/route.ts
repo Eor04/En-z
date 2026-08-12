@@ -4,19 +4,48 @@ import { NextResponse } from 'next/server';
 import { PrismaOrderRepository } from '@/infrastructure/repositories/PrismaOrderRepository';
 import { GetOrderDetails } from '@/application/use-cases/orders/GetOrderDetails';
 import { realtimeEventBus } from '@/infrastructure/services/events/realtime-event-bus';
+import { requireUser, authErrorResponse } from '@/infrastructure/services/auth/session-guards';
+import prisma from '@/infrastructure/db/prisma';
+import type { SessionUser } from '@/infrastructure/services/auth/session-guards';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+/**
+ * ¿Este usuario puede ver o tocar este pedido?
+ *
+ * - ADMIN: todo
+ * - CUSTOMER: sólo los suyos
+ * - BUSINESS_OWNER: sólo los de su comercio
+ * - DRIVER: el que tiene asignado, o cualquiera sin repartidor (para aceptarlo)
+ */
+async function canAccessOrder(user: SessionUser, orderId: string) {
+  if (user.role === 'ADMIN') return true;
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { customerId: true, driverId: true, business: { select: { ownerId: true } } },
+  });
+  if (!order) return false;
+
+  if (user.role === 'CUSTOMER') return order.customerId === user.id;
+  if (user.role === 'BUSINESS_OWNER') return order.business?.ownerId === user.id;
+  if (user.role === 'DRIVER') return order.driverId === user.id || order.driverId === null;
+
+  return false;
+}
+
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const orderRepository = new PrismaOrderRepository();
-    const useCase = new GetOrderDetails(orderRepository);
+    const user = await requireUser();
 
-    const order = await useCase.execute(params.id);
+    if (!(await canAccessOrder(user, params.id))) {
+      return NextResponse.json({ error: 'Este pedido no es tuyo.' }, { status: 403 });
+    }
 
+    const order = await new GetOrderDetails(new PrismaOrderRepository()).execute(params.id);
     return NextResponse.json({ order });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('Error al obtener orden:', error);
     return NextResponse.json(
       { error: error.message || 'Error al obtener orden' },
@@ -25,19 +54,40 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+/**
+ * PATCH — cambiar el estado del pedido.
+ *
+ * Antes lo podía hacer cualquiera sin sesión: bastaba conocer el id para
+ * marcar un pedido como entregado o cancelarlo.
+ */
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
+    const user = await requireUser(['ADMIN', 'BUSINESS_OWNER', 'DRIVER', 'CUSTOMER']);
+
+    if (!(await canAccessOrder(user, params.id))) {
+      return NextResponse.json({ error: 'Este pedido no es tuyo.' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { status, notesAppend } = body;
 
     if (!status) {
-      return NextResponse.json(
-        { error: 'El campo status es requerido' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'El campo status es requerido' }, { status: 400 });
+    }
+
+    // El cliente sólo puede cancelar, y sólo mientras no haya salido de cocina
+    if (user.role === 'CUSTOMER') {
+      const current = await prisma.order.findUnique({
+        where: { id: params.id },
+        select: { status: true },
+      });
+      const cancelable = ['esperando_pago', 'en_preparacion'];
+      if (status !== 'cancelado' || !cancelable.includes(current?.status ?? '')) {
+        return NextResponse.json(
+          { error: 'Sólo podés cancelar el pedido antes de que salga del local.' },
+          { status: 403 }
+        );
+      }
     }
 
     const orderRepository = new PrismaOrderRepository();
@@ -49,31 +99,27 @@ export async function PATCH(
         ? `${currentOrder.notes} [Motivo: ${notesAppend}]`
         : `[Motivo: ${notesAppend}]`;
 
-      const prisma = (await import('@/infrastructure/db/prisma')).default;
       await prisma.order.update({
         where: { id: params.id },
         data: { notes: newNotes },
       });
     }
 
-    // Emitir eventos SSE en tiempo real
     const orderJson = updatedOrder.toJSON();
-    const eventType = status === 'buscando_driver' ? 'order:ready_for_pickup' : 'order:status_updated';
+    const eventType =
+      status === 'buscando_driver' ? 'order:ready_for_pickup' : 'order:status_updated';
 
-    // Notificar al cliente en su pantalla de seguimiento
     realtimeEventBus.publish(`order:${params.id}`, eventType, {
       orderId: params.id,
       status,
       businessId: updatedOrder.businessId,
     });
 
-    // Notificar a la tienda
     realtimeEventBus.publish(`store:${updatedOrder.businessId}`, 'order:status_updated', {
       orderId: params.id,
       status,
     });
 
-    // Si está listo para recojo (buscando repartidor), avisar a todos los repartidores
     if (status === 'buscando_driver') {
       realtimeEventBus.publish('driver:pool', 'order:ready_for_pickup', {
         orderId: params.id,
@@ -83,11 +129,11 @@ export async function PATCH(
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      order: orderJson,
-    });
+    return NextResponse.json({ success: true, order: orderJson });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('Error al actualizar estado de orden:', error);
     return NextResponse.json(
       { error: error.message || 'Error al actualizar orden' },

@@ -1,68 +1,49 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/infrastructure/services/auth/auth-options';
 import { PrismaOrderRepository } from '@/infrastructure/repositories/PrismaOrderRepository';
 import { PrismaBusinessRepository } from '@/infrastructure/repositories/PrismaBusinessRepository';
 import { PrismaProductRepository } from '@/infrastructure/repositories/PrismaProductRepository';
 import { CreateOrder } from '@/application/use-cases/orders/CreateOrder';
 import { ListCustomerOrders } from '@/application/use-cases/orders/ListCustomerOrders';
 import { ListBusinessOrders } from '@/application/use-cases/orders/ListBusinessOrders';
+import { requireUser, authErrorResponse } from '@/infrastructure/services/auth/session-guards';
 import prisma from '@/infrastructure/db/prisma';
 
+/**
+ * POST /api/orders — crear pedido.
+ *
+ * Sólo clientes autenticados. El `customerId` se toma SIEMPRE de la sesión:
+ * aceptarlo del cuerpo permitiría hacer pedidos a nombre de otra persona.
+ */
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireUser(['CUSTOMER']);
+
     const body = await request.json();
+    const { businessId, deliveryAddress, customerPhone, notes, paymentMethod = 'CASH', items } = body;
 
-    const {
-      businessId,
-      deliveryAddress,
-      customerPhone,
-      notes,
-      paymentMethod = 'CASH',
-      items,
-      customerId: customCustomerId,
-    } = body;
-
-    // Obtener ID del cliente (de la sesión o custom si es prueba/demo)
-    let customerId = (session?.user as any)?.id || customCustomerId;
-
-    if (!customerId) {
-      // Si no hay sesión, buscar al usuario cliente Mateo demo
-      const demoCustomer = await prisma.user.findFirst({
-        where: { role: 'CUSTOMER' },
-      });
-      customerId = demoCustomer?.id;
-    }
-
-    if (!customerId) {
+    if (
+      !deliveryAddress ||
+      !customerPhone ||
+      !items ||
+      !Array.isArray(items) ||
+      items.length === 0
+    ) {
       return NextResponse.json(
-        { error: 'Debe iniciar sesión para realizar un pedido' },
-        { status: 401 }
-      );
-    }
-
-    if (!deliveryAddress || !customerPhone || !items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: 'Campos requeridos faltantes (deliveryAddress, customerPhone, items)' },
+        { error: 'Faltan datos del pedido (dirección, teléfono o productos).' },
         { status: 400 }
       );
     }
 
-    const orderRepository = new PrismaOrderRepository();
-    const businessRepository = new PrismaBusinessRepository();
-    const productRepository = new PrismaProductRepository();
-
     const createOrderUseCase = new CreateOrder(
-      orderRepository,
-      businessRepository,
-      productRepository
+      new PrismaOrderRepository(),
+      new PrismaBusinessRepository(),
+      new PrismaProductRepository()
     );
 
     const result = await createOrderUseCase.execute({
-      customerId,
+      customerId: user.id,
       businessId,
       deliveryAddress,
       customerPhone,
@@ -83,6 +64,9 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('Error al crear orden:', error);
     return NextResponse.json(
       { error: error.message || 'Error al procesar el pedido' },
@@ -91,34 +75,61 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * GET /api/orders — listar pedidos según quién pregunta.
+ *
+ * El alcance lo decide el rol de la sesión, no los parámetros de la URL:
+ * antes cualquiera podía leer el historial completo de otro cliente pasando
+ * `?customerId=`, o los pedidos de toda la plataforma sin sesión.
+ */
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireUser();
     const { searchParams } = new URL(request.url);
-    const businessId = searchParams.get('businessId');
-    const customerId = searchParams.get('customerId');
 
-    const user = session?.user as any;
-
-    // Si se especifica businessId o el usuario es tienda
-    if (businessId || user?.role === 'BUSINESS_OWNER') {
-      const targetBusinessId = businessId || (await prisma.business.findFirst({ where: { ownerId: user?.id } }))?.id;
-      if (targetBusinessId) {
-        const useCase = new ListBusinessOrders();
-        const orders = await useCase.execute(targetBusinessId);
-        return NextResponse.json({ orders });
-      }
-    }
-
-    // Si se especifica customerId o el usuario es cliente
-    const targetCustomerId = customerId || user?.id;
-    if (targetCustomerId) {
-      const useCase = new ListCustomerOrders();
-      const orders = await useCase.execute(targetCustomerId);
+    if (user.role === 'CUSTOMER') {
+      const orders = await new ListCustomerOrders().execute(user.id);
       return NextResponse.json({ orders });
     }
 
-    // Si es ADMIN o sin filtro
+    if (user.role === 'BUSINESS_OWNER') {
+      const business = await prisma.business.findFirst({
+        where: { ownerId: user.id },
+        select: { id: true },
+      });
+      if (!business) return NextResponse.json({ orders: [] });
+
+      const orders = await new ListBusinessOrders().execute(business.id);
+      return NextResponse.json({ orders });
+    }
+
+    if (user.role === 'DRIVER') {
+      const orders = await prisma.order.findMany({
+        where: { driverId: user.id },
+        include: {
+          business: { select: { id: true, name: true } },
+          items: { include: { product: true } },
+          payment: true,
+          tracking: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return NextResponse.json({ orders });
+    }
+
+    // ADMIN: puede filtrar libremente y ver la auditoría global
+    const businessId = searchParams.get('businessId');
+    const customerId = searchParams.get('customerId');
+
+    if (businessId) {
+      const orders = await new ListBusinessOrders().execute(businessId);
+      return NextResponse.json({ orders });
+    }
+    if (customerId) {
+      const orders = await new ListCustomerOrders().execute(customerId);
+      return NextResponse.json({ orders });
+    }
+
     const orders = await prisma.order.findMany({
       include: {
         business: { select: { id: true, name: true } },
@@ -133,6 +144,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ orders });
   } catch (error: any) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('Error al listar órdenes:', error);
     return NextResponse.json(
       { error: error.message || 'Error al obtener órdenes' },
