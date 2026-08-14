@@ -26,6 +26,10 @@ import { EASE_RUNE, tSpring } from '@/presentation/lib/motion';
 
 type AuthTab = 'CUSTOMER' | 'STORE' | 'DRIVER' | 'ADMIN';
 
+/* Las credenciales de prueba no deben publicarse en producción: son cuentas
+   reales de la base y cualquiera que abra el login las vería. */
+const MOSTRAR_CREDENCIALES_DEMO = process.env.NODE_ENV !== 'production';
+
 const TABS: Array<{
   key: AuthTab;
   label: string;
@@ -449,13 +453,15 @@ export function UnifiedLoginForm() {
                   >
                     {isRegistering ? '¿Ya tenés cuenta? Iniciá sesión' : '¿Sin cuenta? Registrate'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => autofill('cliente@gmail.com', 'cliente123')}
-                    className="cursor-pointer text-[11px] text-ink-faint underline transition-colors hover:text-ink-soft"
-                  >
-                    Usar cliente demo
-                  </button>
+                  {MOSTRAR_CREDENCIALES_DEMO && (
+                    <button
+                      type="button"
+                      onClick={() => autofill('cliente@gmail.com', 'cliente123')}
+                      className="cursor-pointer text-[11px] text-ink-faint underline transition-colors hover:text-ink-soft"
+                    >
+                      Usar cliente demo
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -493,6 +499,7 @@ export function UnifiedLoginForm() {
                   </Button>
                 </form>
 
+                {MOSTRAR_CREDENCIALES_DEMO && (
                 <div className="mt-6 border-t border-surface-line pt-5">
                   <p className="mb-2.5 text-[11px] font-semibold text-ink-mute">Cuentas de prueba</p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -512,6 +519,7 @@ export function UnifiedLoginForm() {
                     ))}
                   </div>
                 </div>
+                )}
               </>
             )}
 
@@ -558,6 +566,7 @@ export function UnifiedLoginForm() {
                   </Button>
                 </form>
 
+                {MOSTRAR_CREDENCIALES_DEMO && (
                 <div className="mt-6 border-t border-surface-line pt-5">
                   <p className="mb-2.5 text-[11px] font-semibold text-ink-mute">
                     Repartidores de prueba
@@ -579,6 +588,7 @@ export function UnifiedLoginForm() {
                     ))}
                   </div>
                 </div>
+                )}
               </>
             )}
 
@@ -615,6 +625,7 @@ export function UnifiedLoginForm() {
                   </Button>
                 </form>
 
+                {MOSTRAR_CREDENCIALES_DEMO && (
                 <div className="mt-6 flex items-center justify-between border-t border-surface-line pt-5">
                   <span className="text-[11px] text-ink-mute">Credenciales de prueba</span>
                   <button
@@ -625,6 +636,7 @@ export function UnifiedLoginForm() {
                     Autocompletar admin
                   </button>
                 </div>
+                )}
               </>
             )}
           </motion.div>

@@ -108,39 +108,51 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
-    // 3. Proveedor de Prueba Rápida 1-Click (Para Validación Modular en Desarrollo)
-    CredentialsProvider({
-      id: 'one-click-demo',
-      name: '1-Click Demo Login',
-      credentials: {
-        role: { label: 'Role', type: 'text' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.role) {
-          throw new Error('Rol no especificado para demo');
-        }
+    /* 3. Acceso rápido 1-click, SÓLO en desarrollo.
+     *
+     * Entrega una sesión válida con el rol pedido sin comprobar contraseña.
+     * En producción eso permitía a cualquiera hacer un POST a
+     * /api/auth/callback/one-click-demo con role=ADMIN y quedar como
+     * administrador, saltándose todos los controles de la API.
+     */
+    ...(process.env.NODE_ENV === 'production'
+      ? []
+      : [
+          CredentialsProvider({
+            id: 'one-click-demo',
+            name: '1-Click Demo Login',
+            credentials: {
+              role: { label: 'Role', type: 'text' },
+            },
+            async authorize(credentials) {
+              if (!credentials?.role) {
+                throw new Error('Rol no especificado para demo');
+              }
 
-        const targetRole = credentials.role.toUpperCase();
-        const userRecord = await prisma.user.findFirst({
-          where: { role: targetRole as any },
-          include: { business: true },
-        });
+              const targetRole = credentials.role.toUpperCase();
+              const userRecord = await prisma.user.findFirst({
+                where: { role: targetRole as any },
+                include: { business: true },
+              });
 
-        if (!userRecord) {
-          throw new Error(`No se encontró un usuario con rol ${targetRole} en la base de datos`);
-        }
+              if (!userRecord) {
+                throw new Error(
+                  `No se encontró un usuario con rol ${targetRole} en la base de datos`
+                );
+              }
 
-        return {
-          id: userRecord.id,
-          email: userRecord.email,
-          name: userRecord.name || userRecord.email,
-          image: userRecord.image,
-          role: userRecord.role,
-          driverCode: userRecord.driverCode || undefined,
-          businessId: userRecord.business?.id,
-        } as any;
-      },
-    }),
+              return {
+                id: userRecord.id,
+                email: userRecord.email,
+                name: userRecord.name || userRecord.email,
+                image: userRecord.image,
+                role: userRecord.role,
+                driverCode: userRecord.driverCode || undefined,
+                businessId: userRecord.business?.id,
+              } as any;
+            },
+          }),
+        ]),
 
     // 4. Proveedor de Google OAuth (Si están configuradas las credenciales de Google)
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CLIENT_ID !== 'mock-google-client-id'

@@ -62,19 +62,19 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
         const pending = data.orders.filter((o: any) => o.status === 'esperando_pago');
 
         if (!isFirstLoad.current && soundEnabled) {
-          // 1. 🔔 Alerta si entran nuevos pedidos pendientes
+          // 1. Alerta si entran nuevos pedidos pendientes
           if (pending.length > prevPendingCount.current) {
             playCommerceNewOrderAlert();
           }
 
-          // 2. 🛵 Alerta si un repartidor aceptó la orden y va hacia el local
+          // 2. Alerta si un repartidor aceptó la orden y va hacia el local
           data.orders.forEach((order: any) => {
             const previousStatus = prevOrderStatusMap.current.get(order.id);
             if (previousStatus === 'buscando_driver' && order.status === 'en_camino') {
               playDriverAssignedToStoreAlert();
               setFeedback({
                 type: 'success',
-                message: `🛵 ¡Repartidor ${order.driver?.name || 'en moto'} aceptó el pedido #${order.id.slice(0, 6).toUpperCase()} y va en camino a tu local a recogerlo!`,
+                message: `¡Repartidor ${order.driver?.name || 'en moto'} aceptó el pedido #${order.id.slice(0, 6).toUpperCase()} y va en camino a tu local a recogerlo!`,
               });
             }
           });
@@ -105,7 +105,7 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
       fetchOrders();
       setFeedback({
         type: 'success',
-        message: '🔔 ¡Nueva comanda recibida en tiempo real! Revisa la pestaña de pendientes.',
+        message: '¡Nueva comanda recibida en tiempo real! Revisa la pestaña de pendientes.',
       });
     },
     onOrderPaid: (data) => {
@@ -119,7 +119,7 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
       fetchOrders();
       setFeedback({
         type: 'success',
-        message: `🛵 ¡Repartidor ${data.driverName || 'en moto'} aceptó el pedido #${data.orderId?.slice(0, 6).toUpperCase()} y va hacia tu local!`,
+        message: `¡Repartidor ${data.driverName || 'en moto'} aceptó el pedido #${data.orderId?.slice(0, 6).toUpperCase()} y va hacia tu local!`,
       });
     },
     onOrderStatusUpdated: () => {
@@ -172,8 +172,8 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
         setFeedback({
           type: 'success',
           message: data.pagoAprobado
-            ? '✓ Pedido aceptado y pago confirmado. Ya está en cocina.'
-            : '✓ Pedido aceptado y enviado a cocina. Se notificó al cliente.',
+            ? 'Pedido aceptado y pago confirmado. Ya está en cocina.'
+            : 'Pedido aceptado y enviado a cocina. Se notificó al cliente.',
         });
         setActiveSubTab('cooking');
         await fetchOrders();
@@ -208,13 +208,13 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
         if (nextStatus === 'en_preparacion') {
           setFeedback({
             type: 'success',
-            message: '✓ Pedido ACEPTADO y enviado a Cocina. Se notificó al cliente.',
+            message: 'Pedido ACEPTADO y enviado a Cocina. Se notificó al cliente.',
           });
           setActiveSubTab('cooking');
         } else if (nextStatus === 'buscando_driver') {
           setFeedback({
             type: 'success',
-            message: '✓ Platos marcados como LISTOS. Pedido habilitado para repartidores en moto.',
+            message: 'Platos marcados como LISTOS. Pedido habilitado para repartidores en moto.',
           });
           setActiveSubTab('ready');
         } else if (nextStatus === 'cancelado') {
@@ -359,7 +359,7 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
               title="Recibir alertas de comandas aunque la pantalla del celular esté apagada"
             >
               <Bell className="w-3.5 h-3.5" />
-              <span>{pushLoading ? 'Activando...' : '🔔 Alertas Push Cocina'}</span>
+              <span>{pushLoading ? 'Activando...' : 'Alertas Push Cocina'}</span>
             </button>
           ) : (
             <button
@@ -597,7 +597,7 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
                         </div>
                         <a
                           href={`https://maps.google.com/?q=${encodeURIComponent(
-                            order.deliveryAddress.replace(/📍 Ubicación GPS:\s*/i, '')
+                            order.deliveryAddress.replace(/Ubicación GPS:\s*/i, '')
                           )}`}
                           target="_blank"
                           rel="noreferrer"
@@ -703,8 +703,8 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
                           ? 'Aceptando…'
                           : order.payment?.method === 'QR_MANUAL' &&
                               order.payment?.status !== 'APPROVED'
-                            ? '✓ Aceptar pedido y confirmar pago'
-                            : '✓ Aceptar pedido e iniciar cocina'}
+                            ? 'Aceptar pedido y confirmar pago'
+                            : 'Aceptar pedido e iniciar cocina'}
                       </span>
                     </button>
                   </div>
@@ -780,7 +780,7 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
                     className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-warn to-warn-deep hover:from-warn hover:to-warn text-void text-xs font-black shadow-lg shadow-warn/25 transition-all flex items-center justify-center gap-2"
                   >
                     <Bike className="w-4 h-4" />
-                    <span>{processingId === order.id ? 'Notificando...' : '✓ Platos Listos (Buscar Repartidor en Moto) →'}</span>
+                    <span>{processingId === order.id ? 'Notificando...' : 'Platos Listos (Buscar Repartidor en Moto) →'}</span>
                   </button>
                 </div>
               </div>

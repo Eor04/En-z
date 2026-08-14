@@ -6,8 +6,19 @@ export class ListDriverDeliveries {
       throw new Error('driverId es requerido');
     }
 
+    /* Se acota a los últimos 60 días: antes traía el historial completo del
+       repartidor —con productos, pago y tracking de cada pedido— en cada
+       refresco de 25 s, sólo para mostrar las entregas de hoy. Las métricas
+       acumuladas se calculan aparte, con conteos en la base. */
+    const desde = new Date();
+    desde.setDate(desde.getDate() - 60);
+
     const orders = await prisma.order.findMany({
-      where: { driverId },
+      where: {
+        driverId,
+        OR: [{ status: 'en_camino' }, { updatedAt: { gte: desde } }],
+      },
+      take: 200,
       include: {
         business: {
           include: { space: true },
@@ -87,11 +98,17 @@ export class ListDriverDeliveries {
       .filter((o) => o.payment?.method !== 'CASH')
       .reduce((sum, o) => sum + Number(o.deliveryFee || 10), 0);
 
-    // 4. Totales Históricos
-    const totalEarnings = completedDeliveries.reduce(
-      (sum, o) => sum + Number(o.deliveryFee || 10),
-      0
-    );
+    /* 4. Totales históricos.
+       Se agregan en la base, no sobre la ventana de 60 días: si no, el
+       repartidor vería caer su total de entregas al pasar el tiempo. */
+    const historico = await prisma.order.aggregate({
+      where: { driverId, status: 'entregado' },
+      _sum: { deliveryFee: true },
+      _count: { _all: true },
+    });
+
+    const totalEntregasHistorico = historico._count._all;
+    const totalEarnings = historico._sum.deliveryFee ?? 0;
     const totalCashEarnings = completedDeliveries
       .filter((o) => o.payment?.method === 'CASH')
       .reduce((sum, o) => sum + Number(o.deliveryFee || 10), 0);
@@ -179,7 +196,7 @@ export class ListDriverDeliveries {
       activeGroups,
       completedDeliveries,
       stats: {
-        totalDeliveries: completedDeliveries.length,
+        totalDeliveries: totalEntregasHistorico,
         totalEarnings,
         todayDeliveries: todayCompleted.length,
         todayEarnings,

@@ -110,6 +110,9 @@ model Business {
 
   products      Product[]
   orders        Order[]
+
+  @@index([spaceId, isActive])
+  @@index([ownerId])
 }
 
 model Product {
@@ -127,6 +130,8 @@ model Product {
   updatedAt   DateTime    @updatedAt
 
   orderItems  OrderItem[]
+
+  @@index([businessId, isAvailable])
 }
 
 model Order {
@@ -153,6 +158,15 @@ model Order {
   items           OrderItem[]
   payment         Payment?
   tracking        OrderTracking?
+
+  // Índices sobre los campos por los que filtra la app en cada pantalla.
+  // Sin ellos Postgres recorre la tabla entera, y los paneles consultan
+  // cada 25 segundos.
+  @@index([status, driverId])          // pool de repartidores
+  @@index([driverId, status])          // entregas del repartidor
+  @@index([businessId, createdAt])     // comandas de la tienda
+  @@index([customerId, createdAt])     // historial del cliente
+  @@index([batchCode])                 // pedidos multi-comercio
 }
 
 model OrderItem {
@@ -164,6 +178,9 @@ model OrderItem {
   quantity  Int      @default(1)
   unitPrice Float
   subtotal  Float
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Payment {

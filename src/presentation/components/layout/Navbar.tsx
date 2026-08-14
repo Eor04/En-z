@@ -35,6 +35,10 @@ const NAV = [
   { href: '/orders', label: 'Mis pedidos', icon: Package },
 ];
 
+/* El acceso 1-click sólo existe fuera de producción: allá el proveedor
+   `one-click-demo` ni siquiera está registrado en NextAuth. */
+const DEMO_DISPONIBLE = process.env.NODE_ENV !== 'production';
+
 const DEMO_ROLES = [
   {
     role: 'ADMIN',
@@ -231,7 +235,8 @@ export function Navbar() {
                 al cerrar el aviso flotante) */}
             <PwaHeaderActions className="hidden lg:flex" />
 
-            {/* Switcher de roles demo */}
+            {/* Switcher de roles demo (sólo en desarrollo) */}
+            {DEMO_DISPONIBLE && (
             <div className="relative hidden sm:block">
               <button
                 onClick={(e) => {
@@ -287,6 +292,7 @@ export function Navbar() {
                 )}
               </AnimatePresence>
             </div>
+            )}
 
             {/* Sesión */}
             {status === 'loading' ? (

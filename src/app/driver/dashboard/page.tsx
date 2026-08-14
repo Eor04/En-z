@@ -140,7 +140,7 @@ export default function DriverDashboardPage() {
     enableAudioAlerts: soundEnabled && isOnline,
     onOrderReadyForPickup: (data) => {
       fetchData();
-      setFeedback('🛵 ¡Nuevo pedido listo para recojo en cocina! Apareció en tus pedidos disponibles.');
+      setFeedback('¡Nuevo pedido listo para recojo en cocina! Apareció en tus pedidos disponibles.');
     },
     onOrderDriverAssigned: () => {
       fetchData();
@@ -704,15 +704,8 @@ export default function DriverDashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedMapOrder(principal)}
-                        className="py-2 px-3.5 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/40 text-violet-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
-                      >
-                        <Route className="w-4 h-4 text-violet-400" />
-                        <span>🗺️ Abrir Mapa Interactivo</span>
-                      </button>
-
+                      {/* El mapa vive embebido abajo: el botón del modal duplicaba
+                          el mismo recorrido con un clic de más. */}
                       <div className="text-right">
                         <span className="text-[10px] text-ink-mute uppercase">Tarifa Delivery</span>
                         <div className="text-xl font-black text-violet-400">+10.00 Bs</div>
@@ -731,14 +724,15 @@ export default function DriverDashboardPage() {
                       rel="noreferrer"
                       className="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-violet-500 via-arc to-violet-400 hover:from-violet-400 hover:to-arc-soft text-white text-sm sm:text-base font-black shadow-xl shadow-violet-500/30 flex items-center justify-center gap-2.5 transition-all ring-2 ring-violet-400/50 transform active:scale-98"
                     >
-                      <Navigation className="w-5 h-5 animate-pulse text-void shrink-0" />
+                      <Navigation className="w-5 h-5 shrink-0" />
                       <span className="uppercase tracking-wide font-black">
-                        🧭 Iniciar Ruta en Google Maps (GPS Hablado)
+                        Navegar al cliente
                       </span>
                     </a>
 
-                    {/* Acciones Rápidas secundarias para el repartidor */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {/* Secundarias. "GPS a Cliente" salía sobrando: iba al mismo
+                        destino que el botón principal de arriba. */}
+                    <div className="grid grid-cols-3 gap-2">
                       <a
                         href={navigateToStoreGpsUrl}
                         target="_blank"
@@ -746,17 +740,7 @@ export default function DriverDashboardPage() {
                         className="py-2.5 px-3 rounded-xl bg-warn/10 hover:bg-warn/20 border border-warn/30 text-warn-soft text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
                       >
                         <Store className="w-3.5 h-3.5 shrink-0" />
-                        <span>GPS a Cocina</span>
-                      </a>
-
-                      <a
-                        href={navigateToCustomerGpsUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="py-2.5 px-3 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center"
-                      >
-                        <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span>GPS a Cliente</span>
+                        <span>Ir a cocina</span>
                       </a>
 
                       {cleanPhone && (
@@ -926,8 +910,8 @@ export default function DriverDashboardPage() {
                     <CheckCircle2 className="w-5 h-5" />
                     <span>
                       {order.isMultiStore
-                        ? `✓ Confirmar entrega de las ${order.pickupCount} cocinas`
-                        : '✓ Confirmar Entrega en Puerta del Cliente (Calificar)'}
+                        ? `Confirmar entrega de las ${order.pickupCount} cocinas`
+                        : 'Confirmar Entrega en Puerta del Cliente (Calificar)'}
                     </span>
                   </button>
                 </div>
