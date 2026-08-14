@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'motion/react';
-import { ChefHat, Check, Clock, Bike, PackageCheck } from 'lucide-react';
+import { ChefHat, Check, Clock, Bike, PackageCheck, CreditCard } from 'lucide-react';
 import { Panel, Badge } from '@/presentation/components/ui';
 import { statusMeta } from '@/presentation/lib/orderStatus';
 import { cn } from '@/presentation/lib/utils';
@@ -14,6 +14,8 @@ interface BatchInfo {
   pendientes: number;
   readyForPickup: boolean;
   esperandoA: string[];
+  bloqueadoPorPago?: boolean;
+  pagosPendientes?: number;
 }
 
 /**
@@ -67,13 +69,17 @@ export function BatchProgressPanel({
           'mb-5 flex items-start gap-3 rounded-2xl border p-4 text-[13px]',
           yaEnCamino
             ? 'border-arc/35 bg-arc/10 text-arc-soft'
-            : batch.readyForPickup
-              ? 'border-ok/35 bg-ok/10 text-ok-soft'
-              : 'border-warn/35 bg-warn/10 text-warn-soft'
+            : batch.bloqueadoPorPago
+              ? 'border-ember/40 bg-ember/10 text-ember-soft'
+              : batch.readyForPickup
+                ? 'border-ok/35 bg-ok/10 text-ok-soft'
+                : 'border-warn/35 bg-warn/10 text-warn-soft'
         )}
       >
         {yaEnCamino ? (
           <Bike className="mt-0.5 h-4 w-4 shrink-0" />
+        ) : batch.bloqueadoPorPago ? (
+          <CreditCard className="mt-0.5 h-4 w-4 shrink-0" />
         ) : batch.readyForPickup ? (
           <PackageCheck className="mt-0.5 h-4 w-4 shrink-0" />
         ) : (
@@ -86,6 +92,14 @@ export function BatchProgressPanel({
                 Un solo repartidor lleva todo
               </span>
               Recogió en los {batch.total} locales y va en camino a tu dirección.
+            </>
+          ) : batch.bloqueadoPorPago ? (
+            <>
+              <span className="block font-display font-bold text-white">
+                Falta confirmar tu pago
+              </span>
+              Las {batch.total} cocinas ya terminaron, pero el pedido no sale hasta que la
+              tienda verifique tu comprobante. Adjuntalo más abajo si todavía no lo hiciste.
             </>
           ) : batch.readyForPickup ? (
             <>

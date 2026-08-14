@@ -63,6 +63,15 @@ export class GetOrderDetails {
       (o: any) => !['buscando_driver', 'en_camino', 'entregado'].includes(o.status)
     );
 
+    /* El pool de repartidores sólo despacha con el pago aprobado (o en
+       efectivo, que se cobra al entregar). Si las cocinas terminaron pero el
+       comprobante sigue sin verificar, el pedido queda parado: hay que
+       decírselo al cliente en vez de mostrar "buscando repartidor". */
+    const sinPagar = activas.filter(
+      (o: any) => o.payment?.method !== 'CASH' && o.payment?.status !== 'APPROVED'
+    );
+    const cocinasListas = activas.length > 0 && pendientes.length === 0;
+
     return {
       ...rawOrder,
       batchOrders: todas,
@@ -72,9 +81,11 @@ export class GetOrderDetails {
         total: todas.length,
         listas: listas.length,
         pendientes: pendientes.length,
-        readyForPickup: activas.length > 0 && pendientes.length === 0,
+        readyForPickup: cocinasListas,
         esperandoA: pendientes.map((o: any) => o.business?.name ?? 'Local'),
         listasNombres: listas.map((o: any) => o.business?.name ?? 'Local'),
+        bloqueadoPorPago: cocinasListas && sinPagar.length > 0,
+        pagosPendientes: sinPagar.length,
       },
     };
   }

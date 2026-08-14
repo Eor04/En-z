@@ -196,7 +196,14 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const rawStep = TIMELINE.indexOf(current.status);
   const esperandoOtraCocina =
     isMultiStore && !batchInfo.readyForPickup && current.status === 'buscando_driver';
-  const currentStep = esperandoOtraCocina ? TIMELINE.indexOf('en_preparacion') : rawStep;
+
+  /* Las cocinas terminaron pero el comprobante sigue sin verificar: el pedido
+     no se despacha, así que no podemos decir "buscando repartidor". */
+  const esperandoPago =
+    Boolean(batchInfo.bloqueadoPorPago) && current.status === 'buscando_driver';
+
+  const currentStep =
+    esperandoOtraCocina || esperandoPago ? TIMELINE.indexOf('en_preparacion') : rawStep;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -448,15 +455,19 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                 <StatusIcon className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
                   <span className="block font-display font-bold text-white">
-                    {esperandoOtraCocina
-                      ? `${current.business?.name} ya terminó`
-                      : meta.label}
+                    {esperandoPago
+                      ? 'Falta confirmar tu pago'
+                      : esperandoOtraCocina
+                        ? `${current.business?.name} ya terminó`
+                        : meta.label}
                   </span>
-                  {esperandoOtraCocina
-                    ? `Falta que termine ${batchInfo.esperandoA.join(' y ')}. Cuando estén los ${batchInfo.total} locales, un repartidor recoge todo junto.`
-                    : current.status === 'en_camino' && current.driver?.name
-                      ? `${current.driver.name} va en camino a ${current.deliveryAddress}.`
-                      : meta.hint}
+                  {esperandoPago
+                    ? 'La comida ya está lista, pero el pedido no sale hasta que la tienda verifique tu comprobante. Adjuntalo más abajo si todavía no lo hiciste.'
+                    : esperandoOtraCocina
+                      ? `Falta que termine ${batchInfo.esperandoA.join(' y ')}. Cuando estén los ${batchInfo.total} locales, un repartidor recoge todo junto.`
+                      : current.status === 'en_camino' && current.driver?.name
+                        ? `${current.driver.name} va en camino a ${current.deliveryAddress}.`
+                        : meta.hint}
                 </p>
               </motion.div>
             </div>

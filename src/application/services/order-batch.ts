@@ -32,6 +32,10 @@ export interface BatchSibling {
   businessId: string;
   businessName: string;
   itemCount: number;
+  paymentMethod: string | null;
+  paymentStatus: string | null;
+  /** El pago de esta comanda frena el despacho. */
+  pagoPendiente: boolean;
 }
 
 export interface BatchProgress {
@@ -47,6 +51,9 @@ export interface BatchProgress {
   siblings: BatchSibling[];
   /** Nombres de los locales que faltan, para el mensaje al cliente. */
   esperandoA: string[];
+  /** Cocinas listas pero con el pago sin confirmar: el pedido NO se despacha. */
+  bloqueadoPorPago: boolean;
+  pagosPendientes: number;
 }
 
 /**
@@ -76,14 +83,14 @@ export async function getBatchOrders(orderId: string) {
   if (!order.batchCode) {
     const single = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { business: { select: { id: true, name: true } }, items: true },
+      include: { business: { select: { id: true, name: true } }, items: true, payment: true },
     });
     return single ? [single] : [];
   }
 
   return prisma.order.findMany({
     where: { batchCode: order.batchCode },
-    include: { business: { select: { id: true, name: true } }, items: true },
+    include: { business: { select: { id: true, name: true } }, items: true, payment: true },
     orderBy: { createdAt: 'asc' },
   });
 }
@@ -99,11 +106,20 @@ export async function getBatchProgress(orderId: string): Promise<BatchProgress> 
     businessId: o.businessId,
     businessName: o.business?.name ?? 'Local',
     itemCount: o.items?.length ?? 0,
+    paymentMethod: o.payment?.method ?? null,
+    paymentStatus: o.payment?.status ?? null,
+    /* El pool sólo despacha con el pago aprobado, o en efectivo (se cobra al
+       entregar). Un QR sin verificar deja el pedido parado. */
+    pagoPendiente:
+      o.payment?.method !== 'CASH' && o.payment?.status !== 'APPROVED',
   }));
 
   const activas = siblings.filter((s) => s.status !== 'cancelado');
   const listas = siblings.filter((s) => LISTO.has(s.status)).length;
   const pendientes = activas.filter((s) => !LISTO.has(s.status));
+  const sinPagar = activas.filter((s) => s.pagoPendiente);
+
+  const cocinasListas = activas.length > 0 && siblings.every((s) => NO_BLOQUEA.has(s.status));
 
   return {
     batchCode: (orders[0] as any)?.batchCode ?? null,
@@ -112,9 +128,13 @@ export async function getBatchProgress(orderId: string): Promise<BatchProgress> 
     listas,
     pendientes: pendientes.length,
     // Si todas quedaron canceladas no hay nada que recoger
-    readyForPickup: activas.length > 0 && siblings.every((s) => NO_BLOQUEA.has(s.status)),
+    readyForPickup: cocinasListas,
     siblings,
     esperandoA: pendientes.map((s) => s.businessName),
+    /* Las cocinas terminaron pero falta confirmar el pago: el pedido queda
+       parado sin que nadie lo note. Hay que decírselo al cliente. */
+    bloqueadoPorPago: cocinasListas && sinPagar.length > 0,
+    pagosPendientes: sinPagar.length,
   };
 }
 
