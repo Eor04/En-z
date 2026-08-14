@@ -51,10 +51,31 @@ export class GetOrderDetails {
       });
     }
 
+    const todas = batchOrders.length > 0 ? batchOrders : [rawOrder];
+
+    /* Avance del lote: el cliente ve UN pedido aunque por detrás haya una
+       comanda por cocina. Necesita saber cuáles ya salieron y a cuál falta. */
+    const activas = todas.filter((o: any) => o.status !== 'cancelado');
+    const listas = todas.filter((o: any) =>
+      ['buscando_driver', 'en_camino', 'entregado'].includes(o.status)
+    );
+    const pendientes = activas.filter(
+      (o: any) => !['buscando_driver', 'en_camino', 'entregado'].includes(o.status)
+    );
+
     return {
       ...rawOrder,
-      batchOrders: batchOrders.length > 0 ? batchOrders : [rawOrder],
-      isMultiStore: (batchOrders.length > 1),
+      batchOrders: todas,
+      isMultiStore: batchOrders.length > 1,
+      batch: {
+        batchCode: rawOrder.batchCode,
+        total: todas.length,
+        listas: listas.length,
+        pendientes: pendientes.length,
+        readyForPickup: activas.length > 0 && pendientes.length === 0,
+        esperandoA: pendientes.map((o: any) => o.business?.name ?? 'Local'),
+        listasNombres: listas.map((o: any) => o.business?.name ?? 'Local'),
+      },
     };
   }
 }

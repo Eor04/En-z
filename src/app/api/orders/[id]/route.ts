@@ -5,6 +5,7 @@ import { PrismaOrderRepository } from '@/infrastructure/repositories/PrismaOrder
 import { GetOrderDetails } from '@/application/use-cases/orders/GetOrderDetails';
 import { realtimeEventBus } from '@/infrastructure/services/events/realtime-event-bus';
 import { requireUser, authErrorResponse } from '@/infrastructure/services/auth/session-guards';
+import { getBatchProgress } from '@/application/services/order-batch';
 import prisma from '@/infrastructure/db/prisma';
 import type { SessionUser } from '@/infrastructure/services/auth/session-guards';
 
@@ -106,30 +107,51 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     const orderJson = updatedOrder.toJSON();
+
+    // Estado del lote completo (para un pedido de un solo local, total = 1)
+    const batch = await getBatchProgress(params.id);
+
     const eventType =
       status === 'buscando_driver' ? 'order:ready_for_pickup' : 'order:status_updated';
 
-    realtimeEventBus.publish(`order:${params.id}`, eventType, {
-      orderId: params.id,
-      status,
-      businessId: updatedOrder.businessId,
-    });
+    // El cliente sigue el lote entero: le mandamos también cuántas cocinas
+    // terminaron y a cuáles falta esperar.
+    for (const hermana of batch.siblings) {
+      realtimeEventBus.publish(`order:${hermana.id}`, eventType, {
+        orderId: params.id,
+        status,
+        businessId: updatedOrder.businessId,
+        batch: {
+          total: batch.total,
+          listas: batch.listas,
+          pendientes: batch.pendientes,
+          readyForPickup: batch.readyForPickup,
+          esperandoA: batch.esperandoA,
+        },
+      });
+    }
 
     realtimeEventBus.publish(`store:${updatedOrder.businessId}`, 'order:status_updated', {
       orderId: params.id,
       status,
     });
 
-    if (status === 'buscando_driver') {
+    /* Sólo se libera al pool de repartidores cuando TODAS las cocinas del lote
+       terminaron. Antes cada comanda se anunciaba por su cuenta y el
+       repartidor terminaba yendo dos veces al mismo patio. */
+    if (status === 'buscando_driver' && batch.readyForPickup) {
       realtimeEventBus.publish('driver:pool', 'order:ready_for_pickup', {
         orderId: params.id,
+        orderIds: batch.siblings.map((s) => s.id),
         businessId: updatedOrder.businessId,
         status: 'buscando_driver',
         deliveryAddress: updatedOrder.deliveryAddress,
+        isMultiStore: batch.isMultiStore,
+        pickupCount: batch.total,
       });
     }
 
-    return NextResponse.json({ success: true, order: orderJson });
+    return NextResponse.json({ success: true, order: orderJson, batch });
   } catch (error: any) {
     const authResponse = authErrorResponse(error);
     if (authResponse) return authResponse;

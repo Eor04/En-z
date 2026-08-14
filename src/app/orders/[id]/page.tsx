@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { PaymentVerificationCard } from '@/presentation/components/payments/PaymentVerificationCard';
 import { OrderDriverRatingCard } from '@/presentation/components/orders/OrderDriverRatingCard';
+import { BatchProgressPanel } from '@/presentation/components/orders/BatchProgressPanel';
 import {
   playCustomerKitchenStartedAlert,
   playCustomerOrderInRouteAlert,
@@ -176,11 +177,26 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const batchOrders: any[] = order.batchOrders || [order];
   const isMultiStore = batchOrders.length > 1;
   const current = batchOrders.find((o) => o.id === selectedBatchOrderId) || order;
-  const currentStep = TIMELINE.indexOf(current.status);
   const meta = statusMeta(current.status);
   const StatusIcon = meta.icon;
   const combinedTotal = batchOrders.reduce((sum, o) => sum + o.totalPrice, 0);
   const isCancelled = current.status === 'cancelado';
+
+  const batchInfo = order.batch ?? {
+    total: batchOrders.length,
+    listas: 0,
+    pendientes: 0,
+    readyForPickup: true,
+    esperandoA: [],
+  };
+
+  /* La línea de tiempo describe el PEDIDO, no una comanda suelta: mientras
+     alguna cocina siga trabajando el pedido no avanza a "buscando repartidor",
+     aunque este local ya haya terminado lo suyo. */
+  const rawStep = TIMELINE.indexOf(current.status);
+  const esperandoOtraCocina =
+    isMultiStore && !batchInfo.readyForPickup && current.status === 'buscando_driver';
+  const currentStep = esperandoOtraCocina ? TIMELINE.indexOf('en_preparacion') : rawStep;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -326,55 +342,13 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         )}
       </AnimatePresence>
 
-      {/* ---------------- Selector de cocinas ---------------- */}
-      {isMultiStore && (
-        <Panel className="mb-7 p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 font-display text-[13px] font-bold text-white">
-              <ChefHat className="h-4 w-4 text-warn" />
-              Cocinas en tu pedido ({batchOrders.length})
-            </h2>
-            <span className="text-[10px] text-ink-faint">Tocá una para ver su detalle</span>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-            {batchOrders.map((bo) => {
-              const selected = bo.id === current.id;
-              const m = statusMeta(bo.status);
-              const Icon = m.icon;
-              return (
-                <button
-                  key={bo.id}
-                  type="button"
-                  onClick={() => setSelectedBatchOrderId(bo.id)}
-                  className={cn(
-                    'relative cursor-pointer rounded-2xl border p-4 text-left transition-all duration-200',
-                    selected
-                      ? 'border-violet-400/60 bg-violet-500/12 shadow-glow-violet'
-                      : 'border-surface-line bg-void-800/50 hover:border-violet-500/35'
-                  )}
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <span className="truncate font-display text-[12px] font-bold text-white">
-                      {bo.business?.name}
-                    </span>
-                    <span className="shrink-0 font-display text-[12px] font-bold text-arc tabular">
-                      {bs(bo.totalPrice)} Bs
-                    </span>
-                  </div>
-                  <span className="flex items-center gap-1.5 text-[11px] font-semibold text-violet-300">
-                    <Icon className="h-3.5 w-3.5" />
-                    {m.label}
-                  </span>
-                  <span className="mt-1 block truncate text-[10px] text-ink-faint">
-                    {bo.items?.length || 0} productos · {bo.business?.space?.name || 'Local'}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Panel>
-      )}
+      {/* ---------------- Avance por local (pedido multi-comercio) ---------------- */}
+      <BatchProgressPanel
+        batch={batchInfo}
+        orders={batchOrders}
+        selectedId={current.id}
+        onSelect={setSelectedBatchOrderId}
+      />
 
       {/* ---------------- Línea de tiempo ---------------- */}
       <Panel className="mb-7 p-6 sm:p-8">
@@ -473,10 +447,16 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
               >
                 <StatusIcon className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  <span className="block font-display font-bold text-white">{meta.label}</span>
-                  {current.status === 'en_camino' && current.driver?.name
-                    ? `${current.driver.name} va en camino a ${current.deliveryAddress}.`
-                    : meta.hint}
+                  <span className="block font-display font-bold text-white">
+                    {esperandoOtraCocina
+                      ? `${current.business?.name} ya terminó`
+                      : meta.label}
+                  </span>
+                  {esperandoOtraCocina
+                    ? `Falta que termine ${batchInfo.esperandoA.join(' y ')}. Cuando estén los ${batchInfo.total} locales, un repartidor recoge todo junto.`
+                    : current.status === 'en_camino' && current.driver?.name
+                      ? `${current.driver.name} va en camino a ${current.deliveryAddress}.`
+                      : meta.hint}
                 </p>
               </motion.div>
             </div>

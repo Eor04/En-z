@@ -104,19 +104,19 @@ export default function DriverDashboardPage() {
 
   const fetchData = async () => {
     try {
-      // 1. Pedidos disponibles
+      // 1. Pedidos disponibles, ya agrupados por lote (un viaje = un grupo)
       const availRes = await fetch('/api/driver/orders/available');
       const availData = await availRes.json();
-      if (availRes.ok && availData.orders) {
-        if (availData.orders.length > prevAvailCount.current && soundEnabled && isOnline) {
+      if (availRes.ok && availData.groups) {
+        if (availData.groups.length > prevAvailCount.current && soundEnabled && isOnline) {
           playDriverNewDeliveryAlert();
         }
-        prevAvailCount.current = availData.orders.length;
-        setAvailableOrders(availData.orders || []);
+        prevAvailCount.current = availData.groups.length;
+        setAvailableOrders(availData.groups || []);
       }
 
       // 2. Entregas activas, historial y billetera
-      const delivRes = await fetch(`/api/driver/deliveries?driverId=${driverId}`);
+      const delivRes = await fetch('/api/driver/deliveries');
       const delivData = await delivRes.json();
       if (delivRes.ok) {
         setActiveDeliveries(delivData.activeDeliveries || []);
@@ -493,62 +493,100 @@ export default function DriverDashboardPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {availableOrders.map((order) => {
-                const isActing = actionLoading === order.id;
-                const storeCoords = extractCoordinates(order.business?.space?.name || order.business?.address);
+              {availableOrders.map((group) => {
+                /* Cada grupo es UN viaje. Si el pedido era multi-comercio trae
+                   varias paradas y sólo llega acá cuando todas las cocinas
+                   terminaron, así el repartidor no va dos veces al mismo patio. */
+                const primera = group.orders?.[0] ?? group;
+                const isActing = actionLoading === primera.id;
+                const paradas = group.pickups ?? [];
 
                 return (
                   <div
-                    key={order.id}
+                    key={group.groupId ?? primera.id}
                     className="p-5 rounded-3xl rune-panel border-2 border-violet-500/40 hover:border-violet-500/80 transition-all space-y-4 shadow-xl bg-gradient-to-b from-void-700/90 to-void-700/60"
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-violet-500/20 text-violet-300 border border-violet-500/40">
-                            ORD-#{order.id.slice(0, 6).toUpperCase()}
+                            ORD-#{primera.id.slice(0, 6).toUpperCase()}
                           </span>
-                          {order.batchCode && (
+                          {group.isMultiStore && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-arc/20 text-arc-soft border border-arc/40">
-                              Lote Multi-Local
+                              {group.pickupCount} paradas
                             </span>
                           )}
                         </div>
                         <h4 className="font-black text-white text-base mt-1.5 flex items-center gap-1.5">
-                          <Store className="w-4 h-4 text-warn" />
-                          <span>{order.business?.name}</span>
+                          <Store className="w-4 h-4 text-warn shrink-0" />
+                          <span className="truncate">
+                            {group.isMultiStore
+                              ? `Recoger en ${group.pickupCount} locales`
+                              : paradas[0]?.businessName || primera.business?.name}
+                          </span>
                         </h4>
-                        <p className="text-[11px] text-ink-mute">
-                          {order.business?.space?.name || 'Patio Gastronómico'} • {order.business?.space?.location || 'Trinidad'}
-                        </p>
+                        {!group.isMultiStore && (
+                          <p className="text-[11px] text-ink-mute truncate">
+                            {paradas[0]?.spaceName || 'Patio gastronómico'} · Trinidad
+                          </p>
+                        )}
                       </div>
 
-                      <div className="text-right">
-                        <div className="text-[10px] text-ink-mute uppercase tracking-wider font-semibold">Tu Ganancia</div>
-                        <div className="text-xl font-black text-violet-400">+10.00 Bs</div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[10px] text-ink-mute uppercase tracking-wider font-semibold">Tu ganancia</div>
+                        <div className="text-xl font-black text-violet-400 tabular">+10.00 Bs</div>
                         <span className="text-[10px] text-ink-faint">Tarifa fija moto</span>
                       </div>
                     </div>
 
-                    {/* Delivery Destination */}
+                    {/* Paradas de recojo, en orden */}
+                    <div className="space-y-2">
+                      {paradas.map((p: any, i: number) => (
+                        <div
+                          key={p.orderId}
+                          className="p-3 rounded-2xl bg-void-700/80 border border-surface-line"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-2 min-w-0">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 border border-violet-400/40 text-[10px] font-black text-violet-300">
+                                {i + 1}
+                              </span>
+                              <span className="truncate text-xs font-black text-white">
+                                {p.businessName}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-[11px] font-bold text-violet-300 tabular">
+                              {p.subtotal.toFixed(2)} Bs
+                            </span>
+                          </div>
+                          <p className="mt-1 pl-7 text-[10px] text-ink-mute truncate">
+                            {p.spaceName ? `${p.spaceName} · ` : ''}
+                            {p.items.map((it: any) => `${it.quantity}× ${it.name}`).join(', ')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Destino */}
                     <div className="p-3.5 rounded-2xl bg-void-700/80 border border-surface-line text-xs space-y-2.5">
                       <div className="flex items-start gap-2">
                         <MapPin className="w-4 h-4 text-ember shrink-0 mt-0.5" />
-                        <div>
-                          <span className="text-[10px] text-ink-mute uppercase font-bold">Destino de Entrega:</span>
-                          <p className="font-black text-white text-xs mt-0.5">{order.deliveryAddress}</p>
+                        <div className="min-w-0">
+                          <span className="text-[10px] text-ink-mute uppercase font-bold">Destino de entrega</span>
+                          <p className="font-black text-white text-xs mt-0.5">{group.deliveryAddress}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-2 border-t border-surface-line text-[11px] text-ink-mute">
-                        <span>Cliente: <strong className="text-ink">{order.customer?.name}</strong></span>
-                        <span>{order.items?.length || 0} platos ({order.totalPrice.toFixed(2)} Bs)</span>
+                        <span>Cliente: <strong className="text-ink">{group.customer?.name}</strong></span>
+                        <span className="tabular">{group.totalPrice.toFixed(2)} Bs</span>
                       </div>
 
-                      {order.notes && (
+                      {group.notes && (
                         <div className="p-2 rounded-xl bg-warn/10 border border-warn/20 text-warn-soft text-[11px] italic">
-                          Nota cliente: &quot;{order.notes}&quot;
+                          Nota cliente: &quot;{group.notes}&quot;
                         </div>
                       )}
                     </div>
@@ -556,23 +594,28 @@ export default function DriverDashboardPage() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedMapOrder(order)}
+                        onClick={() => setSelectedMapOrder(primera)}
                         className="py-3 px-3.5 rounded-2xl bg-void-700 hover:bg-surface-raised border border-violet-500/40 text-violet-400 hover:text-violet-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                         title="Ver ruta en mapa interactivo"
                       >
                         <Route className="w-4 h-4" />
-                        <span>Ver Mapa</span>
+                        <span>Ver mapa</span>
                       </button>
 
-                      {/* BOTÓN PRINCIPAL PARA EL REPARTIDOR: ACEPTAR PEDIDO PARA IR A RECOGER */}
                       <button
                         type="button"
                         disabled={isActing}
-                        onClick={() => handleAcceptOrder(order.id)}
+                        onClick={() => handleAcceptOrder(primera.id)}
                         className="flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-violet-500 to-arc hover:from-violet-400 hover:to-arc text-white text-xs font-black shadow-lg shadow-violet-500/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 ring-2 ring-violet-400/40"
                       >
                         <Bike className="w-4 h-4" />
-                        <span>{isActing ? 'Asignando...' : '🏍️ Aceptar Pedido (+10.00 Bs)'}</span>
+                        <span>
+                          {isActing
+                            ? 'Asignando…'
+                            : group.isMultiStore
+                              ? `Aceptar las ${group.pickupCount} paradas (+10.00 Bs)`
+                              : 'Aceptar pedido (+10.00 Bs)'}
+                        </span>
                       </button>
                     </div>
                   </div>
