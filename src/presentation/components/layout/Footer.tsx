@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin, QrCode, CreditCard, Banknote, Phone } from 'lucide-react';
+import { MapPin, QrCode, Banknote, Phone } from 'lucide-react';
 import { EnZLogo } from '@/presentation/components/brand/EnZLogo';
 import { Reveal } from '@/presentation/components/ui';
 
@@ -20,14 +20,12 @@ const COLUMNS = [
       { href: '/auth/login?tab=customer', label: 'Clientes' },
       { href: '/auth/login?tab=store', label: 'Tiendas' },
       { href: '/auth/login?tab=driver', label: 'Repartidores' },
-      { href: '/auth/login?tab=admin', label: 'Administración' },
     ],
   },
 ];
 
 const PAYMENTS = [
   { icon: QrCode, label: 'QR con comprobante' },
-  { icon: CreditCard, label: 'Tarjeta online' },
   { icon: Banknote, label: 'Efectivo al recibir' },
 ];
 

@@ -45,7 +45,10 @@ import {
 import { bs, cn } from '@/presentation/lib/utils';
 import { EASE_RUNE } from '@/presentation/lib/motion';
 
-type Method = 'CASH' | 'QR_MANUAL' | 'GATEWAY_ONLINE';
+/* La pasarela con tarjeta se retiró: en Trinidad casi no se usa y dejaba
+   un camino de pago sin probar. El enum de la base la conserva por los
+   pedidos históricos. */
+type Method = 'CASH' | 'QR_MANUAL';
 
 /** Cabecera numerada reutilizable de cada bloque del checkout. */
 function StepHeader({
@@ -95,13 +98,6 @@ const METHODS: Array<{
       'Dividimos las cuentas por restaurante. Transferís a cada local y adjuntás los comprobantes en el seguimiento.',
     accent: 'warn',
     tag: 'Más usado en Trinidad',
-  },
-  {
-    value: 'GATEWAY_ONLINE',
-    icon: CreditCard,
-    title: 'Tarjeta online',
-    text: 'Cargo único con débito o crédito y confirmación instantánea por webhook.',
-    accent: 'info',
   },
   {
     value: 'CASH',
@@ -471,11 +467,7 @@ export default function CheckoutPage() {
                             )}
                           </span>
                           <span className="mt-1.5 block text-[12px] leading-relaxed text-ink-mute">
-                            {m.value === 'GATEWAY_ONLINE'
-                              ? `Cargo único consolidado de ${bs(total)} Bs.`
-                              : isMultiStore && m.multiText
-                                ? m.multiText
-                                : m.text}
+                            {isMultiStore && m.multiText ? m.multiText : m.text}
                           </span>
                         </span>
                       </label>
@@ -496,7 +488,7 @@ export default function CheckoutPage() {
 
                       {/* Desglose multi-comercio */}
                       <AnimatePresence>
-                        {isMultiStore && active && m.value !== 'GATEWAY_ONLINE' && (
+                        {isMultiStore && active && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}

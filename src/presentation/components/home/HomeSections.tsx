@@ -8,9 +8,7 @@ import {
   ShoppingBag,
   Store,
   Bike,
-  ShieldCheck,
   QrCode,
-  CreditCard,
   Banknote,
   Search,
   PackageCheck,
@@ -216,12 +214,6 @@ const PAYMENTS = [
     tone: 'from-violet-600/25',
   },
   {
-    icon: CreditCard,
-    title: 'Tarjeta online',
-    text: 'Pasarela integrada con confirmación automática por webhook. Sin esperas ni verificación manual.',
-    tone: 'from-info/25',
-  },
-  {
     icon: Banknote,
     title: 'Efectivo al recibir',
     text: 'Pagás en la puerta directamente al repartidor. Ideal si preferís no usar banca digital.',
@@ -236,11 +228,11 @@ export function PaymentMethods() {
         <SectionHeader
           center
           eyebrow="Pagos"
-          title="Tres formas de pagar, cero fricción"
-          subtitle="Pensado para el mercado local: usá lo que ya usás todos los días."
+          title="Dos formas de pagar, cero fricción"
+          subtitle="Pensado para Trinidad: transferencia por QR o efectivo en la puerta."
         />
 
-        <StaggerList className="grid gap-5 md:grid-cols-3">
+        <StaggerList className="grid gap-5 md:grid-cols-2">
           {PAYMENTS.map((p) => (
             <StaggerItem key={p.title}>
               <Panel interactive className="relative h-full overflow-hidden p-6">
@@ -292,14 +284,6 @@ const PORTALS = [
     cta: 'Entrar como repartidor',
     accent: 'info',
   },
-  {
-    icon: ShieldCheck,
-    title: 'Administración',
-    text: 'Alta de espacios y comercios, control de suscripciones y auditoría global de pedidos.',
-    href: '/auth/login?tab=admin',
-    cta: 'Consola maestra',
-    accent: 'ember',
-  },
 ] as const;
 
 const ACCENT: Record<string, { ring: string; text: string; bg: string }> = {
@@ -319,7 +303,7 @@ export function RolePortals() {
           subtitle="En Z no es solo una app de pedidos: es la operación completa, con paneles dedicados para tiendas, repartidores y administración."
         />
 
-        <StaggerList className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <StaggerList className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {PORTALS.map((p) => {
             const a = ACCENT[p.accent];
             return (

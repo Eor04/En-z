@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import {
@@ -24,7 +24,7 @@ import { Button, Field, Input, inputBase } from '@/presentation/components/ui';
 import { cn } from '@/presentation/lib/utils';
 import { EASE_RUNE, tSpring } from '@/presentation/lib/motion';
 
-type AuthTab = 'CUSTOMER' | 'STORE' | 'DRIVER' | 'ADMIN';
+type AuthTab = 'CUSTOMER' | 'STORE' | 'DRIVER';
 
 /* Las credenciales de prueba no deben publicarse en producción: son cuentas
    reales de la base y cualquiera que abra el login las vería. */
@@ -57,13 +57,6 @@ const TABS: Array<{
     icon: Bike,
     accentText: 'text-info',
     accentBar: 'from-info-deep via-info to-info-soft',
-  },
-  {
-    key: 'ADMIN',
-    label: 'Admin',
-    icon: ShieldCheck,
-    accentText: 'text-ember',
-    accentBar: 'from-ember-deep via-ember to-ember-soft',
   },
 ];
 
@@ -144,15 +137,24 @@ export function UnifiedLoginForm() {
         setErrorMsg(res.error);
       } else {
         setSuccessMsg('¡Listo! Entrando…');
-        setTimeout(() => {
-          const dest =
-            activeTab === 'STORE'
+
+        /* El destino lo decide el rol real de la cuenta, no la pestaña en la
+           que se escribió. Así el admin entra por el formulario de cliente con
+           sus credenciales y cae en su consola, sin necesidad de una pestaña
+           que anuncie que existe. */
+        const sesion = await getSession();
+        const rol = (sesion?.user as any)?.role as string | undefined;
+
+        const dest =
+          rol === 'ADMIN'
+            ? '/admin/dashboard'
+            : rol === 'BUSINESS_OWNER'
               ? '/store/dashboard'
-              : activeTab === 'DRIVER'
+              : rol === 'DRIVER'
                 ? '/driver/dashboard'
-                : activeTab === 'ADMIN'
-                  ? '/admin/dashboard'
-                  : callbackUrl;
+                : callbackUrl;
+
+        setTimeout(() => {
           router.push(dest);
           router.refresh();
         }, 700);
@@ -263,7 +265,7 @@ export function UnifiedLoginForm() {
   return (
     <div className="mx-auto w-full max-w-xl">
       {/* Selector de rol */}
-      <div className="mb-6 grid grid-cols-4 gap-1 rounded-2xl border border-surface-line bg-void-800/70 p-1.5 backdrop-blur-xl">
+      <div className="mb-6 grid grid-cols-3 gap-1 rounded-2xl border border-surface-line bg-void-800/70 p-1.5 backdrop-blur-xl">
         {TABS.map((t) => {
           const active = activeTab === t.key;
           return (
@@ -592,53 +594,6 @@ export function UnifiedLoginForm() {
               </>
             )}
 
-            {/* ---------- ADMIN ---------- */}
-            {activeTab === 'ADMIN' && (
-              <>
-                <header className="mb-6">
-                  <h2 className="flex items-center gap-2 font-display text-xl font-bold text-white">
-                    <ShieldCheck className="h-5 w-5 text-ember" />
-                    Consola de administración
-                  </h2>
-                  <p className="mt-1.5 text-[13px] text-ink-mute">
-                    Gestión de espacios, comercios, suscripciones y auditoría global.
-                  </p>
-                </header>
-
-                <form onSubmit={handleCredentialsLogin} className="space-y-4">
-                  <Field label="Email de administrador" htmlFor="email" required>
-                    <IconInput
-                      id="email"
-                      icon={Mail}
-                      type="email"
-                      required
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@pedidostrinidad.com"
-                    />
-                  </Field>
-                  {passwordField('Contraseña maestra')}
-                  <Button type="submit" size="lg" full loading={loading} className="mt-2">
-                    {!loading && 'Acceder a la consola'}
-                    {!loading && <ArrowRight className="h-4 w-4" />}
-                  </Button>
-                </form>
-
-                {MOSTRAR_CREDENCIALES_DEMO && (
-                <div className="mt-6 flex items-center justify-between border-t border-surface-line pt-5">
-                  <span className="text-[11px] text-ink-mute">Credenciales de prueba</span>
-                  <button
-                    type="button"
-                    onClick={() => autofill('admin@pedidostrinidad.com', 'admin123')}
-                    className="cursor-pointer text-[11px] font-semibold text-ember-soft underline transition-colors hover:text-white"
-                  >
-                    Autocompletar admin
-                  </button>
-                </div>
-                )}
-              </>
-            )}
           </motion.div>
         </AnimatePresence>
       </div>
