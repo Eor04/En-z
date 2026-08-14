@@ -155,6 +155,42 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
     }
   }, [businessId]);
 
+  /**
+   * Aceptar el pedido en un solo gesto.
+   *
+   * Si el pago es QR con comprobante, el backend lo aprueba junto con la
+   * comanda: antes había que aceptar acá y además verificar el comprobante en
+   * la pestaña "Comprobantes QR", y si se olvidaba el pedido quedaba trabado.
+   */
+  const handleAcceptOrder = async (orderId: string) => {
+    setProcessingId(orderId);
+    try {
+      const res = await fetch(`/api/store/orders/${orderId}/accept`, { method: 'POST' });
+      const data = await res.json();
+
+      if (res.ok) {
+        setFeedback({
+          type: 'success',
+          message: data.pagoAprobado
+            ? '✓ Pedido aceptado y pago confirmado. Ya está en cocina.'
+            : '✓ Pedido aceptado y enviado a cocina. Se notificó al cliente.',
+        });
+        setActiveSubTab('cooking');
+        await fetchOrders();
+        if (onOrderUpdated) onOrderUpdated();
+      } else {
+        setFeedback({
+          type: 'error',
+          message: data.error || 'No se pudo aceptar el pedido',
+        });
+      }
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Error de conexión' });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleUpdateOrderStatus = async (orderId: string, nextStatus: string, notesAppend?: string) => {
     setProcessingId(orderId);
     try {
@@ -578,25 +614,59 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
                       )}
                     </div>
 
-                    {/* Comprobante QR si existe */}
+                    {/* Comprobante QR: visible acá mismo, no en otra pestaña */}
                     {order.payment?.receiptUrl && (
-                      <div className="flex items-center justify-between p-3 rounded-2xl bg-violet-950/50 border border-info/40">
-                        <div className="flex items-center gap-2 text-info-soft">
-                          <QrCode className="w-4 h-4 text-info shrink-0" />
-                          <span className="text-[11px] font-bold">
-                            Comprobante QR ({order.payment.paymentReference || 'Transferencia'})
+                      <div className="p-3 rounded-2xl bg-violet-950/50 border border-info/40">
+                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                          <div className="flex items-center gap-2 text-info-soft min-w-0">
+                            <QrCode className="w-4 h-4 text-info shrink-0" />
+                            <span className="text-[11px] font-bold truncate">
+                              Comprobante · {order.payment.paymentReference || 'Transferencia'}
+                            </span>
+                          </div>
+                          <span
+                            className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                              order.payment.status === 'APPROVED'
+                                ? 'bg-ok/15 text-ok-soft border-ok/40'
+                                : 'bg-warn/15 text-warn-soft border-warn/40'
+                            }`}
+                          >
+                            {order.payment.status === 'APPROVED' ? 'Cobrado' : 'Por verificar'}
                           </span>
                         </div>
+
                         <button
                           type="button"
                           onClick={() => setSelectedReceiptUrl(order.payment.receiptUrl)}
-                          className="px-3 py-1.5 rounded-xl bg-info-deep hover:bg-info text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-info-deep/20"
+                          title="Ampliar el comprobante"
+                          className="block w-full overflow-hidden rounded-xl border border-info/30 bg-void-800 transition-transform hover:scale-[1.01]"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Ver Imagen</span>
+                          <img
+                            src={order.payment.receiptUrl}
+                            alt="Comprobante de transferencia"
+                            className="max-h-52 w-full object-contain"
+                          />
                         </button>
+
+                        <p className="mt-2 text-center text-[10px] text-ink-faint">
+                          Verificá que el monto coincida con {order.totalPrice.toFixed(2)} Bs ·
+                          tocá para ampliar
+                        </p>
                       </div>
                     )}
+
+                    {/* QR sin comprobante todavía */}
+                    {order.payment?.method === 'QR_MANUAL' &&
+                      !order.payment?.receiptUrl &&
+                      order.payment?.status !== 'APPROVED' && (
+                        <div className="flex items-start gap-2 p-3 rounded-2xl bg-warn/10 border border-warn/40 text-warn-soft">
+                          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span className="text-[11px] leading-relaxed">
+                            El cliente eligió pago por QR pero todavía no adjuntó el
+                            comprobante. Esperá a que lo suba antes de aceptar.
+                          </span>
+                        </div>
+                      )}
                   </div>
                 </div>
 
@@ -620,15 +690,22 @@ export function StoreLiveOrdersManager({ businessId, onOrderUpdated }: StoreLive
                       <span>Rechazar Pedido</span>
                     </button>
 
-                    {/* Botón Aceptar e Iniciar Cocina */}
+                    {/* Un solo botón: acepta la comanda y da por cobrado el QR */}
                     <button
                       type="button"
-                      onClick={() => handleUpdateOrderStatus(order.id, 'en_preparacion')}
+                      onClick={() => handleAcceptOrder(order.id)}
                       disabled={processingId === order.id}
                       className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-arc hover:from-violet-400 hover:to-arc text-white text-xs font-black shadow-lg shadow-violet-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 ring-2 ring-violet-400/40"
                     >
                       <ChefHat className="w-4 h-4" />
-                      <span>{processingId === order.id ? 'Aceptando...' : '✓ Aceptar Pedido e Iniciar Cocina'}</span>
+                      <span>
+                        {processingId === order.id
+                          ? 'Aceptando…'
+                          : order.payment?.method === 'QR_MANUAL' &&
+                              order.payment?.status !== 'APPROVED'
+                            ? '✓ Aceptar pedido y confirmar pago'
+                            : '✓ Aceptar pedido e iniciar cocina'}
+                      </span>
                     </button>
                   </div>
                 </div>

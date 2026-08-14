@@ -27,6 +27,11 @@ import { useCart } from '@/presentation/context/CartContext';
 import { ClientLocationPicker } from '@/presentation/components/maps/ClientLocationPicker';
 import { AddressBook } from '@/presentation/components/maps/AddressBook';
 import {
+  CheckoutQrPayment,
+  type QrGroup,
+  type ReceiptEntry,
+} from '@/presentation/components/checkout/CheckoutQrPayment';
+import {
   Badge,
   Button,
   EmptyState,
@@ -142,6 +147,20 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  /* Comprobantes por local, cargados antes de confirmar el pedido */
+  const [receipts, setReceipts] = useState<Record<string, ReceiptEntry>>({});
+
+  /* La tarifa de envío se cobra una sola vez, en el primer local: el mismo
+     criterio que usa CreateOrder al repartir los montos. */
+  const qrGroups: QrGroup[] = groupedByBusiness.map((g, i) => ({
+    businessId: g.businessId,
+    businessName: g.businessName,
+    qrCodeUrl: g.qrCodeUrl,
+    subtotal: g.subtotal,
+    amount: g.subtotal + (i === 0 ? deliveryFee : 0),
+    carriesDeliveryFee: i === 0,
+  }));
+
   const role = (session?.user as any)?.role as string | undefined;
 
   /* --- Puerta de acceso: hacer un pedido exige sesión de cliente --- */
@@ -218,6 +237,19 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Con QR el pago se resuelve acá: sin comprobante el pedido quedaría trabado
+    if (paymentMethod === 'QR_MANUAL') {
+      const faltantes = qrGroups.filter((g) => !receipts[g.businessId]?.receiptUrl);
+      if (faltantes.length > 0) {
+        setErrorMessage(
+          faltantes.length === qrGroups.length
+            ? 'Adjuntá la captura de tu transferencia para continuar.'
+            : `Falta el comprobante de ${faltantes.map((f) => f.businessName).join(' y ')}.`
+        );
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/orders', {
@@ -238,6 +270,33 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'No pudimos procesar tu pedido.');
+
+      /* Adjuntar cada comprobante a la comanda de su local. Se hace acá, en el
+         mismo envío, para que la tienda lo vea junto con el pedido. */
+      if (paymentMethod === 'QR_MANUAL') {
+        const creadas: any[] = data.orders ?? [data.order];
+        const resultados = await Promise.all(
+          creadas.map((o) => {
+            const entry = receipts[o.businessId];
+            if (!entry?.receiptUrl) return Promise.resolve(true);
+            return fetch('/api/payments/upload-receipt', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: o.id,
+                receiptUrl: entry.receiptUrl,
+                transactionReference: entry.reference?.trim() || undefined,
+              }),
+            }).then((r) => r.ok);
+          })
+        );
+
+        // El pedido ya existe: si algún comprobante falla se reintenta desde
+        // el seguimiento, no tiene sentido bloquear al cliente acá.
+        if (resultados.some((ok) => !ok)) {
+          console.warn('Algún comprobante no se pudo adjuntar; se puede reintentar en el seguimiento.');
+        }
+      }
 
       clearCart();
       router.push(`/orders/${data.order.id}`);
@@ -420,6 +479,20 @@ export default function CheckoutPage() {
                           </span>
                         </span>
                       </label>
+
+                      {/* Pago por QR ahí mismo: un QR por local + comprobante */}
+                      <AnimatePresence>
+                        {active && m.value === 'QR_MANUAL' && (
+                          <CheckoutQrPayment
+                            groups={qrGroups}
+                            deliveryFee={deliveryFee}
+                            receipts={receipts}
+                            onChange={(businessId, entry) =>
+                              setReceipts((prev) => ({ ...prev, [businessId]: entry }))
+                            }
+                          />
+                        )}
+                      </AnimatePresence>
 
                       {/* Desglose multi-comercio */}
                       <AnimatePresence>
