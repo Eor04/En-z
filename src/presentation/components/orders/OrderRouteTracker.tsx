@@ -15,16 +15,20 @@ import { EASE_RUNE } from '@/presentation/lib/motion';
  * local → domicilio, con una parada por cada cocina si el pedido era
  * multi-comercio.
  *
- * No se dibuja la moto: la posición del repartidor sólo la conoce su propio
- * navegador y hoy no se guarda en el servidor. Preferimos no inventar un punto
- * antes que mostrarle al cliente una ubicación que no es real.
+ * La moto aparece con la última posición que reportó el repartidor y se mueve
+ * en vivo con los eventos `driver:location`. Si todavía no reportó ninguna, se
+ * dibuja sólo el tramo local → domicilio y se avisa, en lugar de inventar un
+ * punto que el cliente leería como real.
  */
 export function OrderRouteTracker({
   order,
   batchOrders,
+  driverPosition,
 }: {
   order: any;
   batchOrders?: any[];
+  /** Posición en vivo recibida por SSE; pisa la última guardada. */
+  driverPosition?: { lat: number; lng: number; at?: string } | null;
 }) {
   const driverAsignado = Boolean(order?.driver);
   const entregado = order?.status === 'entregado';
@@ -47,6 +51,17 @@ export function OrderRouteTracker({
         } as MapPoint;
       });
   }, [order, batchOrders]);
+
+  /* La posición en vivo manda; si no llegó ninguna, usamos la última que el
+     repartidor dejó guardada al aceptar o durante un viaje anterior. */
+  const moto = React.useMemo<MapPoint | null>(() => {
+    const lat = driverPosition?.lat ?? order?.driver?.driverLat;
+    const lng = driverPosition?.lng ?? order?.driver?.driverLng;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+    return { lat, lng, label: order?.driver?.name ?? 'Repartidor', sublabel: 'En camino' };
+  }, [driverPosition, order?.driver]);
+
+  const visto = driverPosition?.at ?? order?.driver?.driverLocationAt;
 
   const destino = React.useMemo<MapPoint>(() => {
     const c = extractCoordinates(order?.deliveryAddress, -14.8348, -64.9042);
@@ -81,7 +96,13 @@ export function OrderRouteTracker({
           </Badge>
         </div>
 
-        <RouteMapCanvas store={primera} extraStops={resto} customer={destino} height={280} />
+        <RouteMapCanvas
+          store={primera}
+          extraStops={resto}
+          customer={destino}
+          driver={moto}
+          height={280}
+        />
 
         {/* Leyenda del recorrido */}
         <ol className="mt-4 space-y-2">
@@ -127,8 +148,17 @@ export function OrderRouteTracker({
 
         <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-ink-faint">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          El mapa muestra el recorrido que hace tu repartidor. La posición exacta de la moto en
-          vivo todavía no está disponible.
+          {moto ? (
+            <span>
+              La moto se mueve en el mapa a medida que tu repartidor avanza
+              {visto ? ` · última señal ${new Date(visto).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}` : ''}.
+            </span>
+          ) : (
+            <span>
+              Todavía no recibimos la ubicación de tu repartidor. Aparece en cuanto active el
+              GPS en su teléfono.
+            </span>
+          )}
         </p>
       </Panel>
     </motion.div>

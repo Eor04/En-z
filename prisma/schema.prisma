@@ -54,6 +54,12 @@ model User {
   phone         String?
   isFrozen      Boolean   @default(false) // Admin: Congelar/Descongelar cuenta de usuario
   frozenReason  String?   // Motivo del congelamiento
+
+  // Última posición reportada por el repartidor, para el seguimiento en vivo
+  driverLat        Float?
+  driverLng        Float?
+  driverLocationAt DateTime?
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

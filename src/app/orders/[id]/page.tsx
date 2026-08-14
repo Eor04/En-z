@@ -50,6 +50,13 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const [selectedBatchOrderId, setSelectedBatchOrderId] = useState<string>(params.id);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [liveBanner, setLiveBanner] = useState<{ title: string; desc: string } | null>(null);
+  /* Posición del repartidor en vivo, por SSE. Se guarda aparte del pedido para
+     no volver a pedir toda la orden cada vez que la moto se mueve. */
+  const [driverPosition, setDriverPosition] = useState<{
+    lat: number;
+    lng: number;
+    at?: string;
+  } | null>(null);
 
   const prevStatusMap = React.useRef<Map<string, string>>(new Map());
   const isFirstLoad = React.useRef(true);
@@ -135,6 +142,12 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         title: '¡Pedido entregado!',
         desc: 'Calificá la atención de tu repartidor.',
       });
+    },
+    onDriverLocation: (data) => {
+      // Sólo mueve el marcador: no hace falta recargar el pedido entero
+      if (typeof data?.lat === 'number' && typeof data?.lng === 'number') {
+        setDriverPosition({ lat: data.lat, lng: data.lng, at: data.at });
+      }
     },
   });
 
@@ -352,7 +365,11 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
 
       {/* ---------------- Avance por local (pedido multi-comercio) ---------------- */}
       {/* Recorrido en el mapa, desde que el repartidor toma el pedido */}
-      <OrderRouteTracker order={current} batchOrders={batchOrders} />
+      <OrderRouteTracker
+        order={current}
+        batchOrders={batchOrders}
+        driverPosition={driverPosition}
+      />
 
       <BatchProgressPanel
         batch={batchInfo}

@@ -10,6 +10,8 @@ export type RealtimeEventType =
   | 'order:in_route'
   | 'order:delivered'
   | 'order:cancelled'
+  /** Posición del repartidor durante la entrega, para el mapa en vivo. */
+  | 'driver:location'
   | 'system:ping';
 
 export interface RealtimeEventPayload {

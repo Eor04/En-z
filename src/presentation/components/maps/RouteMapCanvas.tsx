@@ -9,9 +9,9 @@ import { cn } from '@/presentation/lib/utils';
  * Se usa en dos lugares con el mismo dibujo: dentro del modal del repartidor y
  * embebido en las tarjetas de entrega en curso y en el seguimiento del cliente.
  *
- * El marcador del repartidor es opcional: sólo el propio repartidor conoce su
- * posición (la lee de su navegador). Para el cliente se dibuja el tramo
- * local → domicilio, sin inventar dónde va la moto.
+ * El marcador del repartidor es opcional y se actualiza sin reconstruir el
+ * mapa: si aún no hay posición se dibuja sólo el tramo local → domicilio, y la
+ * moto se agrega en cuanto llega la primera coordenada.
  */
 
 export interface MapPoint {
@@ -66,13 +66,23 @@ export function RouteMapCanvas({
 }: RouteMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const driverMarkerRef = useRef<any>(null);
+  const routeRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
+  /* Paradas fijas de la ruta (locales + domicilio), sin la moto. Guardarlas
+     aparte evita adivinar si el primer punto de la polilínea es el repartidor. */
+  const paradasFijasRef = useRef<Array<[number, number]>>([]);
 
+  /* El mapa se construye UNA vez. La moto se mueve aparte, en el efecto de
+     abajo: recrear el mapa en cada actualización de GPS haría parpadear los
+     tiles y perdería el zoom que el usuario eligió. */
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       if (typeof window === 'undefined' || !containerRef.current) return;
       const L = (await import('leaflet')).default;
+      leafletRef.current = L;
       if (cancelled || !containerRef.current || mapRef.current) return;
 
       const map = L.map(containerRef.current, {
@@ -103,23 +113,26 @@ export function RouteMapCanvas({
             }`
           );
 
-      const ruta: Array<[number, number]> = [];
-
-      if (driver) {
-        mk(driver, 'driver');
-        ruta.push([driver.lat, driver.lng]);
-      }
+      const fijas: Array<[number, number]> = [];
 
       const paradas = [store, ...extraStops];
       paradas.forEach((p, i) => {
         mk(p, 'store', paradas.length > 1 ? i + 1 : undefined);
-        ruta.push([p.lat, p.lng]);
+        fijas.push([p.lat, p.lng]);
       });
 
       mk(customer, 'customer');
-      ruta.push([customer.lat, customer.lng]);
+      fijas.push([customer.lat, customer.lng]);
+      paradasFijasRef.current = fijas;
 
-      L.polyline(ruta, {
+      const ruta: Array<[number, number]> = [];
+      if (driver) {
+        driverMarkerRef.current = mk(driver, 'driver');
+        ruta.push([driver.lat, driver.lng]);
+      }
+      ruta.push(...fijas);
+
+      routeRef.current = L.polyline(ruta, {
         color: '#a855f7',
         weight: 4,
         opacity: 0.85,
@@ -142,7 +155,37 @@ export function RouteMapCanvas({
         mapRef.current = null;
       }
     };
-  }, [store, customer, driver, extraStops]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, customer, extraStops]);
+
+  /* Mover la moto sin reconstruir el mapa */
+  useEffect(() => {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map || !driver) return;
+
+    const pos: [number, number] = [driver.lat, driver.lng];
+
+    if (driverMarkerRef.current) {
+      driverMarkerRef.current.setLatLng(pos);
+    } else {
+      driverMarkerRef.current = L.marker(pos, {
+        icon: L.divIcon({
+          className: 'driver-marker',
+          html: iconHtml('driver'),
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        }),
+      })
+        .addTo(map)
+        .bindPopup(`<b>${driver.label}</b>`);
+    }
+
+    // Redibujar la ruta desde la moto hacia las paradas fijas
+    if (routeRef.current) {
+      routeRef.current.setLatLngs([pos, ...paradasFijasRef.current]);
+    }
+  }, [driver]);
 
   return (
     <div

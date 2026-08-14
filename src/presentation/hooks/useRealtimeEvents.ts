@@ -23,6 +23,8 @@ export interface UseRealtimeEventsOptions {
   onOrderDriverAssigned?: (data: any) => void;
   onOrderInRoute?: (data: any) => void;
   onOrderDelivered?: (data: any) => void;
+  /** Posición del repartidor en vivo (sin sonido: llega muy seguido). */
+  onDriverLocation?: (data: any) => void;
   enableAudioAlerts?: boolean;
 }
 
@@ -38,6 +40,7 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions) {
     onOrderDriverAssigned,
     onOrderInRoute,
     onOrderDelivered,
+    onDriverLocation,
     enableAudioAlerts = true,
   } = options;
 
@@ -54,6 +57,7 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions) {
     onOrderDriverAssigned,
     onOrderInRoute,
     onOrderDelivered,
+    onDriverLocation,
     enableAudioAlerts,
   });
 
@@ -67,6 +71,7 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions) {
       onOrderDriverAssigned,
       onOrderInRoute,
       onOrderDelivered,
+      onDriverLocation,
       enableAudioAlerts,
     };
   });
@@ -127,6 +132,10 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions) {
         if (cb.onOrderStatusUpdated) cb.onOrderStatusUpdated(data);
         break;
 
+      case 'driver:location':
+        if (cb.onDriverLocation) cb.onDriverLocation(data);
+        break;
+
       default:
         break;
     }
@@ -176,6 +185,7 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions) {
         'order:in_route',
         'order:delivered',
         'order:cancelled',
+        'driver:location',
       ];
 
       eventTypes.forEach((type) => {

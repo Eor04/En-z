@@ -18,7 +18,16 @@ export class GetOrderDetails {
           select: { id: true, name: true, email: true, phone: true },
         },
         driver: {
-          select: { id: true, name: true, driverCode: true, phone: true },
+          select: {
+            id: true,
+            name: true,
+            driverCode: true,
+            phone: true,
+            // Última posición reportada, para el mapa en vivo del cliente
+            driverLat: true,
+            driverLng: true,
+            driverLocationAt: true,
+          },
         },
         payment: true,
         tracking: true,

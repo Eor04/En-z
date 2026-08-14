@@ -13,18 +13,47 @@ import { extractCoordinates, TRINIDAD_DEFAULT_COORDS } from '@/presentation/util
 export function DriverDeliveryMap({ order }: { order: any }) {
   const [driver, setDriver] = React.useState<MapPoint | null>(null);
 
+  /* Última posición enviada al servidor: sirve para no spamear el endpoint
+     cuando el GPS reporta micro-variaciones estando la moto detenida. */
+  const ultimoEnvio = React.useRef<{ lat: number; lng: number; t: number } | null>(null);
+
   React.useEffect(() => {
     if (!navigator.geolocation) return;
+
+    const reportar = async (lat: number, lng: number) => {
+      const prev = ultimoEnvio.current;
+      const ahora = Date.now();
+
+      if (prev) {
+        // ~11 m por cada 0.0001 grados; por debajo de eso no vale el viaje
+        const movio =
+          Math.abs(prev.lat - lat) > 0.0001 || Math.abs(prev.lng - lng) > 0.0001;
+        const pasoTiempo = ahora - prev.t > 20000;
+        if (!movio && !pasoTiempo) return;
+      }
+
+      ultimoEnvio.current = { lat, lng, t: ahora };
+      try {
+        await fetch('/api/driver/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat, lng }),
+        });
+      } catch {
+        /* si falla se reintenta en la próxima lectura del GPS */
+      }
+    };
+
     const id = navigator.geolocation.watchPosition(
-      (pos) =>
-        setDriver({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          label: 'Tu posición',
-        }),
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setDriver({ lat: latitude, lng: longitude, label: 'Tu posición' });
+        reportar(latitude, longitude);
+      },
       () => setDriver(null),
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 15000 }
     );
+
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
