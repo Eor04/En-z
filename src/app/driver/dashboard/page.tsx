@@ -34,6 +34,7 @@ import {
   Compass,
 } from 'lucide-react';
 import { DriverRouteMapModal } from '@/presentation/components/maps/DriverRouteMapModal';
+import { DriverDeliveryMap } from '@/presentation/components/maps/DriverDeliveryMap';
 import { DriverRatingModal } from '@/presentation/components/driver/DriverRatingModal';
 import { DriverWalletSummary } from '@/presentation/components/driver/DriverWalletSummary';
 import {
@@ -704,6 +705,9 @@ export default function DriverDashboardPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Mapa siempre visible: el recorrido a la vista sin abrir el modal */}
+                  <DriverDeliveryMap order={order} />
 
                   {/* 1. BOTÓN GIGANTE DIRECTO A GOOGLE MAPS GPS HABLADO */}
                   <div className="space-y-2">

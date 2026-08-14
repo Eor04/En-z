@@ -24,6 +24,7 @@ import {
 import { PaymentVerificationCard } from '@/presentation/components/payments/PaymentVerificationCard';
 import { OrderDriverRatingCard } from '@/presentation/components/orders/OrderDriverRatingCard';
 import { BatchProgressPanel } from '@/presentation/components/orders/BatchProgressPanel';
+import { OrderRouteTracker } from '@/presentation/components/orders/OrderRouteTracker';
 import {
   playCustomerKitchenStartedAlert,
   playCustomerOrderInRouteAlert,
@@ -350,6 +351,9 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
       </AnimatePresence>
 
       {/* ---------------- Avance por local (pedido multi-comercio) ---------------- */}
+      {/* Recorrido en el mapa, desde que el repartidor toma el pedido */}
+      <OrderRouteTracker order={current} batchOrders={batchOrders} />
+
       <BatchProgressPanel
         batch={batchInfo}
         orders={batchOrders}
