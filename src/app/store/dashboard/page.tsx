@@ -17,13 +17,13 @@ import {
 } from 'lucide-react';
 import { AttendanceToggle } from '@/presentation/components/store/AttendanceToggle';
 import { ProductManager } from '@/presentation/components/store/ProductManager';
-import { StoreReceiptsManager } from '@/presentation/components/payments/StoreReceiptsManager';
+import { StoreQrManager } from '@/presentation/components/store/StoreQrManager';
 import { StoreLiveOrdersManager } from '@/presentation/components/store/StoreLiveOrdersManager';
 import { StoreAnalyticsDashboard } from '@/presentation/components/store/StoreAnalyticsDashboard';
 import { Badge, Button, Panel, Skeleton, Tabs } from '@/presentation/components/ui';
 import { EASE_RUNE } from '@/presentation/lib/motion';
 
-type Tab = 'orders' | 'receipts' | 'products' | 'analytics';
+type Tab = 'orders' | 'qr' | 'products' | 'analytics';
 
 export default function StoreDashboardPage() {
   const { data: session, status } = useSession();
@@ -150,7 +150,7 @@ export default function StoreDashboardPage() {
           onChange={setActiveTab}
           tabs={[
             { value: 'orders', label: 'Comandas', icon: ChefHat },
-            { value: 'receipts', label: 'Comprobantes QR', icon: QrCode },
+            { value: 'qr', label: 'Mi QR de cobro', icon: QrCode },
             { value: 'products', label: 'Catálogo', icon: Package, count: products?.length ?? 0 },
             { value: 'analytics', label: 'Ganancias', icon: BarChart2 },
           ]}
@@ -168,8 +168,8 @@ export default function StoreDashboardPage() {
           {business && activeTab === 'orders' && (
             <StoreLiveOrdersManager businessId={business.id} onOrderUpdated={fetchBusiness} />
           )}
-          {business && activeTab === 'receipts' && (
-            <StoreReceiptsManager businessId={business.id} onReceiptVerified={fetchBusiness} />
+          {business && activeTab === 'qr' && (
+            <StoreQrManager businessName={business.name} />
           )}
           {business && activeTab === 'products' && (
             <ProductManager businessId={business.id} initialProducts={products || []} />

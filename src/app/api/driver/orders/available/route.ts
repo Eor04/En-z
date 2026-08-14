@@ -10,8 +10,10 @@ export async function GET() {
   try {
     await requireUser(['DRIVER', 'ADMIN']);
 
-    const orders = await listAvailableOrders.execute();
-    return NextResponse.json({ orders });
+    /* execute() ya devuelve { groups, orders }: envolverlo otra vez dejaba el
+       panel del repartidor leyendo `groups` en el nivel equivocado. */
+    const { groups, orders } = await listAvailableOrders.execute();
+    return NextResponse.json({ groups, orders });
   } catch (error: any) {
     const authResponse = authErrorResponse(error);
     if (authResponse) return authResponse;
