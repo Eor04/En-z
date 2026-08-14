@@ -57,19 +57,30 @@ export function DriverDeliveryMap({ order }: { order: any }) {
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
-  const store = React.useMemo<MapPoint>(() => {
-    const c = extractCoordinates(
-      order?.business?.space?.name || order?.business?.address,
-      -14.8315,
-      -64.9012
-    );
-    return {
-      lat: c.lat,
-      lng: c.lng,
-      label: order?.business?.name ?? 'Local',
-      sublabel: order?.business?.space?.name ?? undefined,
-    };
-  }, [order?.business]);
+  /* Un viaje puede tener varias cocinas: se aceptan tanto un pedido suelto
+     como un grupo con `pickups`. */
+  const paradas = React.useMemo<MapPoint[]>(() => {
+    const fuente =
+      order?.pickups?.length > 0
+        ? order.pickups
+        : [
+            {
+              businessName: order?.business?.name,
+              spaceName: order?.business?.space?.name,
+              address: order?.business?.address,
+            },
+          ];
+
+    return fuente.map((p: any) => {
+      const c = extractCoordinates(p.spaceName || p.address, -14.8315, -64.9012);
+      return {
+        lat: c.lat,
+        lng: c.lng,
+        label: p.businessName ?? 'Local',
+        sublabel: p.spaceName ?? undefined,
+      };
+    });
+  }, [order]);
 
   const customer = React.useMemo<MapPoint>(() => {
     const c = extractCoordinates(
@@ -85,9 +96,18 @@ export function DriverDeliveryMap({ order }: { order: any }) {
     };
   }, [order?.deliveryAddress, order?.customer]);
 
+  const [primera, ...resto] = paradas;
+  if (!primera) return null;
+
   return (
     <div className="space-y-2">
-      <RouteMapCanvas store={store} customer={customer} driver={driver} height={240} />
+      <RouteMapCanvas
+        store={primera}
+        extraStops={resto}
+        customer={customer}
+        driver={driver}
+        height={240}
+      />
       {!driver && (
         <p className="text-center text-[10px] text-ink-faint">
           Activá la ubicación del navegador para ver tu moto en el mapa.

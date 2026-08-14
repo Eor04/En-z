@@ -121,8 +121,62 @@ export class ListDriverDeliveries {
       }))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    /* Un pedido multi-comercio son varias comandas, pero para el repartidor es
+       UN viaje: se agrupan por batchCode para que no le aparezcan dos tarjetas
+       con el mismo cliente y el mismo destino. */
+    const porViaje: Record<string, typeof activeDeliveries> = {};
+    activeDeliveries.forEach((o) => {
+      const clave = o.batchCode ?? `single:${o.id}`;
+      (porViaje[clave] ??= []).push(o);
+    });
+
+    const activeGroups = Object.keys(porViaje).map((clave) => {
+      const ordenes = porViaje[clave];
+      const principal = ordenes[0];
+
+      return {
+        groupId: clave,
+        batchCode: principal.batchCode,
+        isMultiStore: ordenes.length > 1,
+        pickupCount: ordenes.length,
+        orderIds: ordenes.map((o) => o.id),
+
+        pickups: ordenes.map((o) => ({
+          orderId: o.id,
+          businessId: o.businessId,
+          businessName: o.business?.name ?? 'Local',
+          spaceName: o.business?.space?.name ?? null,
+          address: o.business?.address ?? null,
+          phone: o.business?.ownerPhone ?? null,
+          items: o.items.map((i: any) => ({
+            name: i.product?.name ?? 'Producto',
+            quantity: i.quantity,
+            subtotal: i.subtotal,
+          })),
+          subtotal: o.totalPrice - o.deliveryFee,
+        })),
+
+        customer: principal.customer,
+        customerPhone: principal.customerPhone,
+        deliveryAddress: principal.deliveryAddress,
+        notes: principal.notes,
+
+        // El envío se cobra una vez por viaje, no por comanda
+        deliveryFee: ordenes.reduce((s, o) => s + Number(o.deliveryFee || 0), 0),
+        totalPrice: ordenes.reduce((s, o) => s + o.totalPrice, 0),
+        /* Efectivo a cobrar: sólo lo que no esté ya pagado */
+        cashToCollect: ordenes
+          .filter((o) => o.payment?.method === 'CASH' && o.payment?.status !== 'APPROVED')
+          .reduce((s, o) => s + o.totalPrice, 0),
+        paymentMethod: principal.payment?.method ?? null,
+
+        orders: ordenes,
+      };
+    });
+
     return {
       activeDeliveries,
+      activeGroups,
       completedDeliveries,
       stats: {
         totalDeliveries: completedDeliveries.length,

@@ -66,7 +66,8 @@ export default function DriverDashboardPage() {
   const [isOnline, setIsOnline] = useState(true);
   const [activeTab, setActiveTab] = useState<'available' | 'active' | 'wallet' | 'history'>('available');
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
-  const [activeDeliveries, setActiveDeliveries] = useState<any[]>([]);
+  /* Entregas agrupadas por viaje: un pedido multi-comercio es UNA tarjeta */
+  const [activeGroups, setActiveGroups] = useState<any[]>([]);
   const [completedDeliveries, setCompletedDeliveries] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({
     totalDeliveries: 0,
@@ -120,7 +121,7 @@ export default function DriverDashboardPage() {
       const delivRes = await fetch('/api/driver/deliveries');
       const delivData = await delivRes.json();
       if (delivRes.ok) {
-        setActiveDeliveries(delivData.activeDeliveries || []);
+        setActiveGroups(delivData.activeGroups || []);
         setCompletedDeliveries(delivData.completedDeliveries || []);
         if (delivData.stats) setStats(delivData.stats);
         if (delivData.wallet) setWallet(delivData.wallet);
@@ -466,7 +467,7 @@ export default function DriverDashboardPage() {
           onChange={setActiveTab}
           tabs={[
             { value: 'available', label: 'Disponibles', icon: ShoppingBag, count: availableOrders.length },
-            { value: 'active', label: 'En curso', icon: Bike, count: activeDeliveries.length },
+            { value: 'active', label: 'En curso', icon: Bike, count: activeGroups.length },
             { value: 'wallet', label: 'Billetera', icon: Wallet },
             { value: 'history', label: 'Historial', icon: Clock, count: completedDeliveries.length },
           ]}
@@ -630,7 +631,7 @@ export default function DriverDashboardPage() {
       {/* TAB 2: MI ENTREGA EN CURSO */}
       {activeTab === 'active' && (
         <div className="space-y-6">
-          {activeDeliveries.length === 0 ? (
+          {activeGroups.length === 0 ? (
             <div className="p-8 rounded-2xl rune-panel border border-surface-line text-center text-xs text-ink-mute">
               <Bike className="w-8 h-8 mx-auto mb-2 text-ink-faint" />
               <p className="font-bold text-white">No tienes entregas activas en este momento</p>
@@ -645,13 +646,21 @@ export default function DriverDashboardPage() {
               </button>
             </div>
           ) : (
-            activeDeliveries.map((order) => {
-              const isActing = actionLoading === order.id;
-              const isCash = order.payment?.method === 'CASH';
+            activeGroups.map((order) => {
+              /* `order` es el VIAJE: una comanda suelta o varias del mismo lote.
+                 Se confirma la entrega una sola vez para todas. */
+              const principal = order.orders?.[0] ?? order;
+              const paradas = order.pickups ?? [];
+              const isActing = actionLoading === principal.id;
+              const isCash = order.cashToCollect > 0;
               const cleanPhone = (order.customerPhone || order.customer?.phone || '').replace(/\D/g, '');
-              
+
               const customerCoords = extractCoordinates(order.deliveryAddress, -14.8348, -64.9042);
-              const storeCoords = extractCoordinates(order.business?.space?.name || order.business?.address, -14.8315, -64.9012);
+              const storeCoords = extractCoordinates(
+                paradas[0]?.spaceName || paradas[0]?.address,
+                -14.8315,
+                -64.9012
+              );
 
               const navigateToCustomerGpsUrl = getGoogleMapsNavigationUrl({
                 lat: customerCoords.lat,
@@ -663,19 +672,19 @@ export default function DriverDashboardPage() {
               const navigateToStoreGpsUrl = getGoogleMapsNavigationUrl({
                 lat: storeCoords.lat,
                 lng: storeCoords.lng,
-                name: order.business?.name,
+                name: paradas[0]?.businessName,
               });
 
               const whatsAppUrl = getDriverWhatsAppMessageUrl({
                 phone: cleanPhone,
                 customerName: order.customer?.name,
-                orderId: order.id,
+                orderId: principal.id,
                 deliveryAddress: order.deliveryAddress,
               });
 
               return (
                 <div
-                  key={order.id}
+                  key={order.groupId}
                   className="p-6 rounded-3xl rune-panel border-2 border-violet-500/50 space-y-5 shadow-2xl shadow-violet-950/20 bg-void"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-line">
@@ -685,14 +694,19 @@ export default function DriverDashboardPage() {
                         <span>Entrega en Curso • En Ruta</span>
                       </div>
                       <h3 className="text-lg font-black text-white">
-                        Pedido ORD-#{order.id.slice(0, 6).toUpperCase()}
+                        Pedido ORD-#{principal.id.slice(0, 6).toUpperCase()}
                       </h3>
+                      {order.isMultiStore && (
+                        <p className="text-[11px] font-bold text-arc-soft mt-0.5">
+                          Recogé en {order.pickupCount} locales antes de entregar
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => setSelectedMapOrder(order)}
+                        onClick={() => setSelectedMapOrder(principal)}
                         className="py-2 px-3.5 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/40 text-violet-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
                       >
                         <Route className="w-4 h-4 text-violet-400" />
@@ -792,27 +806,64 @@ export default function DriverDashboardPage() {
 
                   {/* Two Step Route Details: Pickup -> Dropoff */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    {/* Step 1: Restaurant Pickup */}
-                    <div className="p-4 rounded-2xl bg-void-700/80 border border-surface-line space-y-2">
+                    {/* Paso 1: cocinas de las que hay que recoger */}
+                    <div className="p-4 rounded-2xl bg-void-700/80 border border-surface-line space-y-3">
                       <div className="font-bold text-warn flex items-center gap-1.5">
                         <Store className="w-4 h-4" />
-                        <span>1. Punto de Retiro (Cocina del Comercio)</span>
+                        <span>
+                          {paradas.length > 1
+                            ? `1. Retirar en ${paradas.length} cocinas`
+                            : '1. Punto de Retiro (Cocina del Comercio)'}
+                        </span>
                       </div>
-                      <div className="text-sm font-black text-white">{order.business?.name}</div>
-                      <p className="text-ink-mute text-[11px]">
-                        {order.business?.space?.name || 'Local'} • {order.business?.space?.location || 'Trinidad'}
-                      </p>
-                      <div className="pt-1">
-                        <a
-                          href={navigateToStoreGpsUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-warn hover:underline font-bold text-[11px]"
-                        >
-                          <Navigation className="w-3.5 h-3.5" />
-                          <span>Abrir GPS al Local</span>
-                        </a>
-                      </div>
+
+                      {paradas.map((p: any, i: number) => {
+                        const c = extractCoordinates(p.spaceName || p.address, -14.8315, -64.9012);
+                        const gps = getGoogleMapsNavigationUrl({
+                          lat: c.lat,
+                          lng: c.lng,
+                          name: p.businessName,
+                        });
+                        return (
+                          <div
+                            key={p.orderId}
+                            className={paradas.length > 1 ? 'pt-2 border-t border-surface-line first:pt-0 first:border-0' : ''}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="text-sm font-black text-white flex items-center gap-1.5">
+                                  {paradas.length > 1 && (
+                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-warn/20 border border-warn/40 text-[10px] text-warn-soft">
+                                      {i + 1}
+                                    </span>
+                                  )}
+                                  <span className="truncate">{p.businessName}</span>
+                                </div>
+                                <p className="text-ink-mute text-[11px]">
+                                  {p.spaceName || 'Local'} • Trinidad
+                                </p>
+                              </div>
+                              <span className="shrink-0 text-[11px] font-bold text-violet-300 tabular">
+                                {p.subtotal.toFixed(2)} Bs
+                              </span>
+                            </div>
+
+                            <p className="text-[10px] text-ink-faint mt-1 truncate">
+                              {p.items.map((it: any) => `${it.quantity}× ${it.name}`).join(', ')}
+                            </p>
+
+                            <a
+                              href={gps}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 text-warn hover:underline font-bold text-[11px] mt-1.5"
+                            >
+                              <Navigation className="w-3.5 h-3.5" />
+                              <span>Abrir GPS a {p.businessName}</span>
+                            </a>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Step 2: Customer Delivery */}
@@ -835,16 +886,33 @@ export default function DriverDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Items breakdown */}
-                  <div className="p-3.5 rounded-2xl bg-void-700/60 border border-surface-line text-xs">
-                    <span className="text-[11px] font-bold text-ink-mute block mb-1">Detalle de Platos a Entregar:</span>
-                    <div className="space-y-1">
-                      {order.items?.map((item: any) => (
-                        <div key={item.id} className="text-ink-soft flex justify-between">
-                          <span>• {item.quantity}x {item.product?.name || 'Plato'}</span>
-                          <span className="font-semibold text-ink-mute">{item.subtotal.toFixed(2)} Bs</span>
+                  {/* Detalle de todo lo que lleva el viaje */}
+                  <div className="p-3.5 rounded-2xl bg-void-700/60 border border-surface-line text-xs space-y-2.5">
+                    <span className="text-[11px] font-bold text-ink-mute block">
+                      Detalle de Platos a Entregar:
+                    </span>
+                    {paradas.map((p: any) => (
+                      <div key={p.orderId}>
+                        {paradas.length > 1 && (
+                          <span className="block text-[10px] font-bold text-warn-soft mb-0.5">
+                            {p.businessName}
+                          </span>
+                        )}
+                        <div className="space-y-1">
+                          {p.items.map((item: any, k: number) => (
+                            <div key={k} className="text-ink-soft flex justify-between gap-3">
+                              <span className="truncate">• {item.quantity}x {item.name}</span>
+                              <span className="font-semibold text-ink-mute shrink-0 tabular">
+                                {item.subtotal.toFixed(2)} Bs
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    ))}
+                    <div className="flex justify-between border-t border-surface-line pt-2 font-bold text-white">
+                      <span>Total del pedido</span>
+                      <span className="tabular">{order.totalPrice.toFixed(2)} Bs</span>
                     </div>
                   </div>
 
@@ -852,11 +920,15 @@ export default function DriverDashboardPage() {
                   <button
                     type="button"
                     disabled={isActing}
-                    onClick={() => setRatingModalOrder(order)}
+                    onClick={() => setRatingModalOrder(principal)}
                     className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-arc-deep hover:from-violet-500 hover:to-arc text-white font-black text-sm shadow-xl shadow-violet-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-5 h-5" />
-                    <span>✓ Confirmar Entrega en Puerta del Cliente (Calificar)</span>
+                    <span>
+                      {order.isMultiStore
+                        ? `✓ Confirmar entrega de las ${order.pickupCount} cocinas`
+                        : '✓ Confirmar Entrega en Puerta del Cliente (Calificar)'}
+                    </span>
                   </button>
                 </div>
               );
