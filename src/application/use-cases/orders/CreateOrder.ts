@@ -56,8 +56,18 @@ export class CreateOrder {
       if (item.quantity <= 0) {
         throw new Error('La cantidad de cada producto debe ser mayor a cero');
       }
+    }
 
-      const product = await this.productRepository.findById(item.productId);
+    /* En paralelo, no en serie: la base está en otra región y cada consulta
+       secuencial suma su latencia completa al tiempo de checkout. */
+    const productos = await Promise.all(
+      input.items.map((item) => this.productRepository.findById(item.productId))
+    );
+
+    for (let i = 0; i < input.items.length; i++) {
+      const item = input.items[i];
+      const product = productos[i];
+
       if (!product) {
         throw new Error(`Producto con ID ${item.productId} no encontrado`);
       }
@@ -96,8 +106,14 @@ export class CreateOrder {
 
     // 3. Validar existencia, estado activo y apertura de todos los comercios involucrados
     const businessMap = new Map<string, any>();
-    for (const bId of businessIds) {
-      const business = await this.businessRepository.findById(bId);
+    const negocios = await Promise.all(
+      businessIds.map((bId) => this.businessRepository.findById(bId))
+    );
+
+    for (let i = 0; i < businessIds.length; i++) {
+      const bId = businessIds[i];
+      const business = negocios[i];
+
       if (!business) {
         throw new Error(`Comercio con ID ${bId} no encontrado`);
       }
@@ -119,33 +135,40 @@ export class CreateOrder {
       ? `BATCH-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
       : null;
 
-    // 4. Ejecutar transacción atómica en PostgreSQL
-    const createdOrdersData = await prisma.$transaction(async (tx) => {
-      // Decrementar stock para todos los productos
-      for (const item of fetchedItems) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
-      }
-
-      const createdList: any[] = [];
-      let isFirstStore = true;
-
-      for (const bId of businessIds) {
-        const storeItems = itemsByBusiness.get(bId)!;
-        const storeBusiness = businessMap.get(bId)!;
-        const storeItemsSubtotal = Number(
-          storeItems.reduce((sum, i) => sum + i.subtotal, 0).toFixed(2)
+    /* 4. Transacción atómica.
+     *
+     * Se mantiene lo más corta posible: sólo las escrituras. Antes cada
+     * `order.create` traía un `include` pesado (items+product, payment,
+     * tracking, business, customer), y con dos locales eso pasaba los 5 s de
+     * límite de Prisma contra una base remota. Ahora la transacción sólo
+     * escribe y devuelve ids; los datos completos se leen después, ya fuera.
+     */
+    const createdIds = await prisma.$transaction(
+      async (tx) => {
+        // Descontar stock de todos los productos en paralelo
+        await Promise.all(
+          fetchedItems.map((item) =>
+            tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } },
+            })
+          )
         );
 
-        // La tarifa de delivery base (10.0 Bs) se asigna a la primera orden o de forma compartida
-        const deliveryFee = isFirstStore ? 10.0 : 0.0;
-        const totalPrice = Number((storeItemsSubtotal + deliveryFee).toFixed(2));
-        isFirstStore = false;
+        let isFirstStore = true;
+        const payloads = businessIds.map((bId) => {
+          const storeItems = itemsByBusiness.get(bId)!;
+          const storeBusiness = businessMap.get(bId)!;
+          const storeItemsSubtotal = Number(
+            storeItems.reduce((sum, i) => sum + i.subtotal, 0).toFixed(2)
+          );
 
-        const orderRecord = await tx.order.create({
-          data: {
+          // La tarifa de envío se cobra una sola vez, en la primera comanda
+          const deliveryFee = isFirstStore ? 10.0 : 0.0;
+          const totalPrice = Number((storeItemsSubtotal + deliveryFee).toFixed(2));
+          isFirstStore = false;
+
+          return {
             customerId: input.customerId,
             businessId: bId,
             totalPrice,
@@ -154,7 +177,7 @@ export class CreateOrder {
             customerPhone: input.customerPhone,
             notes: input.notes,
             batchCode,
-            status: 'esperando_pago',
+            status: 'esperando_pago' as const,
             items: {
               create: storeItems.map((v) => ({
                 productId: v.productId,
@@ -163,13 +186,11 @@ export class CreateOrder {
                 subtotal: v.subtotal,
               })),
             },
-            tracking: {
-              create: {},
-            },
+            tracking: { create: {} },
             payment: {
               create: {
                 method: input.paymentMethod,
-                status: 'PENDING',
+                status: 'PENDING' as const,
                 amount: totalPrice,
                 qrCodeData:
                   input.paymentMethod === 'QR_MANUAL'
@@ -177,23 +198,41 @@ export class CreateOrder {
                     : null,
               },
             },
-          },
-          include: {
-            items: { include: { product: true } },
-            payment: true,
-            tracking: true,
-            business: true,
-            customer: true,
-          },
+          };
         });
 
-        createdList.push(orderRecord);
-      }
+        const creadas = await Promise.all(
+          payloads.map((data) =>
+            tx.order.create({ data, select: { id: true, businessId: true } })
+          )
+        );
 
-      return createdList;
+        return creadas;
+      },
+      // Margen para redes lentas; con las escrituras en paralelo sobra
+      { timeout: 20000, maxWait: 10000 }
+    );
+
+    // 5. Ya fuera de la transacción: leer todo lo que hace falta de una vez
+    const orden = createdIds.map((o) => o.id);
+    const encontradas = await prisma.order.findMany({
+      where: { id: { in: orden } },
+      include: {
+        items: { include: { product: true } },
+        payment: true,
+        tracking: true,
+        business: true,
+        customer: true,
+      },
     });
 
-    // 5. Emitir eventos SSE en tiempo real a las tiendas y tracking
+    /* `findMany` no respeta el orden del `in`, y la primera comanda es la que
+       lleva la tarifa de envío: la devolvemos como principal. */
+    const createdOrdersData = orden
+      .map((id) => encontradas.find((o) => o.id === id))
+      .filter((o): o is (typeof encontradas)[number] => Boolean(o));
+
+    // 6. Emitir eventos SSE en tiempo real a las tiendas y al seguimiento
     for (const raw of createdOrdersData) {
       realtimeEventBus.publish(`store:${raw.businessId}`, 'order:created', {
         orderId: raw.id,
@@ -210,16 +249,16 @@ export class CreateOrder {
       });
     }
 
-    // Mapear a entidades de dominio
-    const domainOrders: Order[] = [];
-    for (const raw of createdOrdersData) {
-      const domainObj = await this.orderRepository.findById(raw.id);
-      if (domainObj) {
-        domainOrders.push(domainObj);
-      }
-    }
+    // Mapear a entidades de dominio (en paralelo, no en serie)
+    const mapeadas = await Promise.all(
+      createdOrdersData.map((raw) => this.orderRepository.findById(raw.id))
+    );
+    const domainOrders: Order[] = mapeadas.filter((o): o is Order => Boolean(o));
 
-    const primaryOrder = domainOrders[0] || (await this.orderRepository.findById(createdOrdersData[0].id))!;
+    const primaryOrder = domainOrders[0];
+    if (!primaryOrder) {
+      throw new Error('No se pudo recuperar el pedido recién creado');
+    }
 
     return {
       order: primaryOrder,
